@@ -1,9 +1,7 @@
 # Prerequisites
 *.d
-.idea
-#.idea/codeStyles/Project.xml
-#.idea/vcs.xml
-cmake-build-debug
+.idea/
+cmake-build-debug/
 # Object files
 *.o
 *.ko
