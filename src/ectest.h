@@ -70,20 +70,91 @@
  //TODO IMPLEMENT
 #define ECT_RUNNER(...)
 
-/**
- * @def ECT_RUNNER_START()
- * @brief Marks the beginning of a test program entry point, i.e. a @c main function, in a test module runner.
- * @note Must be matched with a reachable closing @ref ECT_RUNNER_END, else behaviour is undefined.
- */
- //TODO IMPLEMENT
-#define ECT_RUNNER_START()
+typedef void(*ect_testfunc)(void *state);
+typedef void(*ect_setup__)(void);
+typedef void(*ect_teardown__)(void);
 
-/**
- * @def ECT_RUNNER_END()
- * @brief Marks the end of a test program entry point, i.e. a @c main function, in a test module runner.
- */
- //TODO IMPLEMENT
-#define ECT_RUNNER_END()
+typedef struct{
+    const char *name;
+    ect_testfunc func;
+}ect_test;
+
+typedef struct{
+    const char *name;
+    size_t nbtest;
+    size_t natest;
+    size_t nbmodule;
+    size_t namodule;
+    size_t ntests;
+    ect_setup__ *beforetest;
+    ect_teardown__ *aftertest;
+    ect_setup__ *beforemodule;
+    ect_teardown__ *aftermodule;
+    ect_test tests[];
+}ect_module;
+
+typedef void(*ect_freefunc)(void *item);
+
+struct ect_stack_node__{
+    void *data;
+    struct ect_stack_node__ *next;
+};
+
+typedef struct ect_stack{
+    ect_freefunc freefunc;
+    struct ect_stack_node__ *head;
+}ect_stack;
+
+typedef struct {
+    ect_stack *modules;
+}ect_testsuite;
+
+static inline ect_stack *ect_stack_create(ect_freefunc freefunc)
+{
+    ect_stack *stack = malloc(sizeof *stack);
+    if(stack == NULL) return NULL;
+    stack->head = NULL;
+    stack->freefunc = freefunc;
+    return stack;
+}
+
+static inline int ect_stack_push(ect_stack *stack, void *data)
+{
+    if(stack == NULL) return -1;
+    struct ect_stack_node__ *node = malloc(sizeof *node);
+    if(node == NULL) return -2;
+    node->data = data;
+    node->next = stack->head;
+    stack->head = node;
+    return 0;
+}
+
+void *ect_stack_pop(ect_stack *stack)
+{
+    if(stack == NULL || stack->head == NULL) return NULL;
+    struct ect_stack_node__ *node = stack->head;
+    stack->head = stack->head->next;
+    void *data = node->data;
+    free(node);
+    return data;
+}
+
+static inline void ect_stack_destroy(void *stack)
+{
+    if(stack == NULL) return;
+    ect_stack *s = stack;
+    void *data;
+    while(s->head != NULL){
+        data = ect_stack_pop(s);
+        if(s->freefunc != NULL) s->freefunc(data);
+    }
+    free(s);
+}
+
+#define ECT_PREPARE_MODULES()
+    
+#define ECT_START_TESTRUN(testsuite)
+
 
 /**
  * @def ECT_RUN_MODULE(modulename)
@@ -91,6 +162,7 @@
  * @param modulename The name of the test module to run. (Do not quote as string)
  * @note The test module must have been previously imported using @ref ETC_IMPORT_MODULE or @ref ETC_IMPORT_MODULES.
  */
+ //TODO remove in favor of ETC_START_TESTRUN().
 #define ECT_RUN_MODULE(modulename) ECT_RUN_MODULE__(modulename)
 
 /**
@@ -99,6 +171,7 @@
  *  @param modulename The name of the module to import (Do not quote as string)
  *  @note Modules must be imported before the definition of the test program entry point, i.e. the @c main function.
  */
+ //TODO remove, ECT_IMPORT_MODULES renders this obsolete.
 #define ECT_IMPORT_MODULE(modulename) ECT_IMPORT_MODULE__(modulename)
 
 /**
@@ -416,7 +489,7 @@
  * @param nelem The number of elements in @p array.
  */
 //TODO IMPLEMENT
-#define ECT_DARRAY_FOREACH(item, array, nelem)
+#define ECT_DARRAY_FOREACH(item, array, nelem) ECT_DFOREACH__(item, array, nelem)
 
 /**
  * @def ECT_LLIST_FOREACH(item, list, nextname)
@@ -469,13 +542,15 @@
 #   define ECT_ABORT_ON_FAIL 1
 #endif
 
-#define ECT_FOREACH__(item, array) \
+#define ECT_DFOREACH__(item, array, nelem)\
     for(int ECT_CONC__(array,keep__) = 1, \
             ECT_CONC__(array,count__) = 0,\
-            ECT_CONC__(array,size__) = sizeof (array) / sizeof *(array); \
+            ECT_CONC__(array,size__) = nelem; \
         ECT_CONC__(array,keep__) && ECT_CONC__(array,count__) != ECT_CONC__(array,size__); \
         ECT_CONC__(array,keep__) = !ECT_CONC__(array,keep__), ECT_CONC__(array,count__)++) \
       for(item = (array)[ECT_CONC__(array,count__)]; ECT_CONC__(array,keep__); ECT_CONC__(array,keep__) = !ECT_CONC__(array,keep__))
+
+#define ECT_FOREACH__(item, array) ECT_DFOREACH__(item, array, ECT_SIZEOFARRAY__(array))
 
 #define ECT_MODULE_RUNNER__(modulename) ECT_CONCWU__(modulename, run)
 
@@ -553,17 +628,19 @@
 
 /*** MODULE IMPORT ***/
 #define ECT_IMPORT_MODULE__(modulename)\
-    extern ect_moduleresult ECT_CONCWU__(modulename, run)(void)
+    extern ect_module *ECT_CONCWU__(modulename, import)(void)
 
 #define ECT_IMPORT_MODULES__(...)\
-    ECT_LOOP__(ECT_IMPORT_MODULE__, __VA_ARGS__)
+    ECT_LOOP__(ECT_IMPORT_MODULE__, __VA_ARGS__);\
+    ect_module* (*ect_module_importers__[])(void) = {ECT_LOOP__(ECT_GET_REF__, _import, __VA_ARGS__)}
+
 /*** END MODULE IMPORT ***/
 
 /*** MODULE EXPORT ***/
 #define ECT_EXPORT_FUNCS__(arrname, type, ...)\
     ECT_DECLEXPORT_FUNC__(type, __VA_ARGS__)\
     static ECT_FUNC_PTR_ARRAY__(type, arrname) = {\
-    ECT_LOOP__(ECT_EXPORT_FUNC__, __VA_ARGS__)\
+    ECT_LOOP__(ECT_GET_REF__, ,__VA_ARGS__)\
     };\
     static ECT_DECL_FUNC_PTR_ARRAYSIZE__(arrname) = ECT_SIZEOFARRAY__(arrname)
 
@@ -623,25 +700,24 @@
 /*** END MODULE EXPORT ***/
 
 /*** EXPORT LOOPS ***/
-#define ECT_EXPORT_FUNC__1(arg) &arg
-#define ECT_EXPORT_FUNC__2(arg, ...) &arg, ECT_EXPORT_FUNC__1(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__3(arg, ...) &arg, ECT_EXPORT_FUNC__2(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__4(arg, ...) &arg, ECT_EXPORT_FUNC__3(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__5(arg, ...) &arg, ECT_EXPORT_FUNC__4(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__6(arg, ...) &arg, ECT_EXPORT_FUNC__5(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__7(arg, ...) &arg, ECT_EXPORT_FUNC__6(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__8(arg, ...) &arg, ECT_EXPORT_FUNC__7(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__9(arg, ...) &arg, ECT_EXPORT_FUNC__8(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__10(arg, ...) &arg, ECT_EXPORT_FUNC__9(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__11(arg, ...) &arg, ECT_EXPORT_FUNC__10(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__12(arg, ...) &arg, ECT_EXPORT_FUNC__11(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__13(arg, ...) &arg, ECT_EXPORT_FUNC__12(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__14(arg, ...) &arg, ECT_EXPORT_FUNC__13(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__15(arg, ...) &arg, ECT_EXPORT_FUNC__14(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__16(arg, ...) &arg, ECT_EXPORT_FUNC__15(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__17(arg, ...) &arg, ECT_EXPORT_FUNC__16(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__18(arg, ...) &arg, ECT_EXPORT_FUNC__17(__VA_ARGS__)
-#define ECT_EXPORT_FUNC__19(arg, ...) &arg, ECT_EXPORT_FUNC__18(__VA_ARGS__)
+#define ECT_GET_REF__2(appender, arg) &arg##appender
+#define ECT_GET_REF__3(appender, arg, ...) &arg##appender, ECT_GET_REF__2(appender, __VA_ARGS__)
+#define ECT_GET_REF__4(appender, arg, ...) &arg##appender, ECT_GET_REF__3(appender, __VA_ARGS__)
+#define ECT_GET_REF__5(appender, arg, ...) &arg##appender, ECT_GET_REF__4(appender, __VA_ARGS__)
+#define ECT_GET_REF__6(appender, arg, ...) &arg##appender, ECT_GET_REF__5(appender, __VA_ARGS__)
+#define ECT_GET_REF__7(appender, arg, ...) &arg##appender, ECT_GET_REF__6(appender, __VA_ARGS__)
+#define ECT_GET_REF__8(appender, arg, ...) &arg##appender, ECT_GET_REF__7(appender, __VA_ARGS__)
+#define ECT_GET_REF__9(appender, arg, ...) &arg##appender, ECT_GET_REF__8(appender, __VA_ARGS__)
+#define ECT_GET_REF__10(appender, arg, ...) &arg##appender, ECT_GET_REF__9(appender, __VA_ARGS__)
+#define ECT_GET_REF__11(appender, arg, ...) &arg##appender, ECT_GET_REF__10(appender, __VA_ARGS__)
+#define ECT_GET_REF__12(appender, arg, ...) &arg##appender, ECT_GET_REF__11(appender, __VA_ARGS__)
+#define ECT_GET_REF__13(appender, arg, ...) &arg##appender, ECT_GET_REF__12(appender, __VA_ARGS__)
+#define ECT_GET_REF__14(appender, arg, ...) &arg##appender, ECT_GET_REF__13(appender, __VA_ARGS__)
+#define ECT_GET_REF__15(appender, arg, ...) &arg##appender, ECT_GET_REF__14(appender, __VA_ARGS__)
+#define ECT_GET_REF__16(appender, arg, ...) &arg##appender, ECT_GET_REF__15(appender, __VA_ARGS__)
+#define ECT_GET_REF__17(appender, arg, ...) &arg##appender, ECT_GET_REF__16(appender, __VA_ARGS__)
+#define ECT_GET_REF__18(appender, arg, ...) &arg##appender, ECT_GET_REF__17(appender, __VA_ARGS__)
+#define ECT_GET_REF__19(appender, arg, ...) &arg##appender, ECT_GET_REF__18(appender, __VA_ARGS__)
 
 #define ECT_DECLEXPORT_FUNC__1(type, arg) ECT_DECLFUNC__(type, arg);
 #define ECT_DECLEXPORT_FUNC__2(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__1(type, __VA_ARGS__)
@@ -668,25 +744,25 @@
 /*** END EXPORT LOOPS ***/
 
 /*** IMPORT LOOPS ***/
-#define ECT_IMPORT_MODULE__1(arg) ECT_IMPORT_MODULE(arg)
-#define ECT_IMPORT_MODULE__2(arg, ...) ECT_IMPORT_MODULE(arg); ECT_IMPORT_MODULE__1(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__3(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__2(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__4(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__3(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__5(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__4(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__6(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__5(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__7(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__6(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__8(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__7(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__9(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__8(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__10(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__9(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__11(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__10(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__12(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__11(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__13(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__12(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__14(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__13(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__15(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__14(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__16(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__15(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__17(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__16(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__18(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__17(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__19(arg, ...) ECT_IMPORT_MODULE(arg) ECT_IMPORT_MODULE__18(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__1(arg) ECT_IMPORT_MODULE__(arg)
+#define ECT_IMPORT_MODULE__2(arg, ...) ECT_IMPORT_MODULE__(arg); ECT_IMPORT_MODULE__1(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__3(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__2(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__4(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__3(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__5(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__4(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__6(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__5(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__7(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__6(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__8(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__7(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__9(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__8(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__10(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__9(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__11(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__10(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__12(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__11(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__13(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__12(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__14(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__13(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__15(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__14(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__16(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__15(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__17(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__16(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__18(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__17(__VA_ARGS__)
+#define ECT_IMPORT_MODULE__19(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__18(__VA_ARGS__)
 /*** END IMPORT LOOPS ***/
 
 /*** END MODULE EXPORT ***/

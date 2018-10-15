@@ -26,3 +26,5 @@ ECT_TEST(fail)
 }
 
 ECT_EXPORT_MODULE(TestModule)
+
+ect_module *TestModule_import();
