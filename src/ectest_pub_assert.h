@@ -1,0 +1,4 @@
+#ifndef _ECTEST_PUB_ASSERT_H__
+#define _ECTEST_PUB_ASSERT_H__
+
+#endif //_ECTEST_PUB_ASSERT_H__
