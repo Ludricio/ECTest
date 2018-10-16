@@ -74,6 +74,42 @@ typedef void(*ect_testfunc)(void *state);
 typedef void(*ect_setup__)(void);
 typedef void(*ect_teardown__)(void);
 
+//TODO rename to ect_moduleresult__
+typedef struct ect_moduleresult{
+    size_t count;
+    size_t success;
+    size_t failed;
+    size_t skipped;
+}ect_moduleresult;
+
+typedef enum ect_caseresenum__{
+    ECT_CASERES_SUCCESS,
+    ECT_CASERES_FAILED,
+    ECT_CASERES_SKIPPED
+}ect_caseresenum__;
+
+typedef struct {
+    ect_caseresenum__ result;
+    const char *modulename;
+    const char *testname;
+}ect_testresult__;
+
+static inline ect_testresult__ *ect_testresult_new__(ect_caseresenum__ result, const char *modulename, const char *testname)
+{
+    ect_testresult__ *res = malloc(sizeof *res);
+    res->result = result;
+    res->modulename = modulename;
+    res->testname = testname;
+    return res;
+}
+
+//TODO rename to ect_caseresult__
+typedef struct ect_caseresult{
+    const ect_caseresenum__ result;
+    const char *testname;
+    char *msg;
+}ect_caseresult;
+
 typedef struct{
     const char *name;
     ect_testfunc func;
@@ -86,10 +122,10 @@ typedef struct{
     size_t nbmodule;
     size_t namodule;
     size_t ntests;
-    ect_setup__ *beforetest;
-    ect_teardown__ *aftertest;
-    ect_setup__ *beforemodule;
-    ect_teardown__ *aftermodule;
+    ect_setup__ *btest;
+    ect_teardown__ *atest;
+    ect_setup__ *bmodule;
+    ect_teardown__ *amodule;
     ect_test tests[];
 }ect_module;
 
@@ -153,7 +189,7 @@ static inline void ect_stack_destroy(void *stack)
 
 #define ECT_PREPARE_MODULES()
     
-#define ECT_START_TESTRUN(testsuite)
+#define ECT_RUN_TESTS(testsuite)
 
 
 /**
@@ -162,7 +198,7 @@ static inline void ect_stack_destroy(void *stack)
  * @param modulename The name of the test module to run. (Do not quote as string)
  * @note The test module must have been previously imported using @ref ETC_IMPORT_MODULE or @ref ETC_IMPORT_MODULES.
  */
- //TODO remove in favor of ETC_START_TESTRUN().
+ //TODO remove in favor of ECT_RUN_TESTS().
 #define ECT_RUN_MODULE(modulename) ECT_RUN_MODULE__(modulename)
 
 /**
@@ -542,6 +578,7 @@ static inline void ect_stack_destroy(void *stack)
 #   define ECT_ABORT_ON_FAIL 1
 #endif
 
+//TODO Look into if uniqueness can be achieved without conc array
 #define ECT_DFOREACH__(item, array, nelem)\
     for(int ECT_CONC__(array,keep__) = 1, \
             ECT_CONC__(array,count__) = 0,\
@@ -897,28 +934,6 @@ static inline void ect_stack_destroy(void *stack)
 #define ECT_ASSERT_CONTAINSN__(array, item, noccurence, cmpfunc, msg) ECT_FASSERT_CONTAINSN__(array, item, noccurence, cmpfunc, "%s", msg)
 
 /*** END ASSERT ***/
-
-/*** RESULT STRUCTS AND DUMMY FUNCTIONS ***/
-//TODO rename to ect_moduleresult__
-typedef struct ect_moduleresult{
-    int count;
-    int success;
-    int failed;
-    int skipped;
-}ect_moduleresult;
-
-typedef enum ect_caseresenum__{
-    ECT_CASERES_SUCCESS,
-    ECT_CASERES_FAILED,
-    ECT_CASERES_SKIPPED
-}ect_caseresenum__;
-
-//TODO rename to ect_caseresult__
-typedef struct ect_caseresult{
-    const ect_caseresenum__ result;
-    const char *testname;
-    char *msg;
-}ect_caseresult;
 
 static inline void ect_nosetupteardown__(void){}
 #define ECT_NO_SETUP__ ect_nosetupteardown__
