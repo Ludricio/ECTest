@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /**
  * @file ectest.h
@@ -67,148 +68,24 @@
  *
  * @note It is preferred that this macro be used to create test module runners, unless custom run behaviour is needed.
  */
- //TODO IMPLEMENT
-#define ECT_RUNNER(...)
-
-typedef void(*ect_testfunc)(void *state);
-typedef void(*ect_setup__)(void);
-typedef void(*ect_teardown__)(void);
-
-//TODO rename to ect_moduleresult__
-typedef struct ect_moduleresult{
-    size_t count;
-    size_t success;
-    size_t failed;
-    size_t skipped;
-}ect_moduleresult;
-
-typedef enum ect_caseresenum__{
-    ECT_CASERES_SUCCESS,
-    ECT_CASERES_FAILED,
-    ECT_CASERES_SKIPPED
-}ect_caseresenum__;
+#define ECT_RUNNER() ECT_RUNNER__()
 
 typedef struct {
-    ect_caseresenum__ result;
-    const char *modulename;
-    const char *testname;
-}ect_testresult__;
-
-static inline ect_testresult__ *ect_testresult_new__(ect_caseresenum__ result, const char *modulename, const char *testname)
-{
-    ect_testresult__ *res = malloc(sizeof *res);
-    res->result = result;
-    res->modulename = modulename;
-    res->testname = testname;
-    return res;
-}
-
-//TODO rename to ect_caseresult__
-typedef struct ect_caseresult{
-    const ect_caseresenum__ result;
-    const char *testname;
-    char *msg;
-}ect_caseresult;
-
-typedef struct{
-    const char *name;
-    ect_testfunc func;
-}ect_test;
-
-typedef struct{
-    const char *name;
-    size_t nbtest;
-    size_t natest;
-    size_t nbmodule;
-    size_t namodule;
-    size_t ntests;
-    ect_setup__ *btest;
-    ect_teardown__ *atest;
-    ect_setup__ *bmodule;
-    ect_teardown__ *amodule;
-    ect_test tests[];
-}ect_module;
-
-typedef void(*ect_freefunc)(void *item);
-
-struct ect_stack_node__{
-    void *data;
-    struct ect_stack_node__ *next;
-};
-
-typedef struct ect_stack{
-    ect_freefunc freefunc;
-    struct ect_stack_node__ *head;
-}ect_stack;
-
-typedef struct {
-    ect_stack *modules;
+    struct ect_stack__ *modules;
+    struct ect_stack__ *results;
 }ect_testsuite;
 
-static inline ect_stack *ect_stack_create(ect_freefunc freefunc)
-{
-    ect_stack *stack = malloc(sizeof *stack);
-    if(stack == NULL) return NULL;
-    stack->head = NULL;
-    stack->freefunc = freefunc;
-    return stack;
-}
+static inline ect_testsuite *ect_testsuite_create();
+static inline void ect_testsuite_destroy(void *testsuite);
+static inline void ect_export_results(ect_testsuite *testsuite);
 
-static inline int ect_stack_push(ect_stack *stack, void *data)
-{
-    if(stack == NULL) return -1;
-    struct ect_stack_node__ *node = malloc(sizeof *node);
-    if(node == NULL) return -2;
-    node->data = data;
-    node->next = stack->head;
-    stack->head = node;
-    return 0;
-}
+#define ECT_PREPARE_MODULES(testsuite) ECT_PREPARE_MODULES__(testsuite)
 
-void *ect_stack_pop(ect_stack *stack)
-{
-    if(stack == NULL || stack->head == NULL) return NULL;
-    struct ect_stack_node__ *node = stack->head;
-    stack->head = stack->head->next;
-    void *data = node->data;
-    free(node);
-    return data;
-}
+#define ECT_RUN_TESTSUITE(testsuite) ECT_RUN_TESTSUITE__(testsuite)
 
-static inline void ect_stack_destroy(void *stack)
-{
-    if(stack == NULL) return;
-    ect_stack *s = stack;
-    void *data;
-    while(s->head != NULL){
-        data = ect_stack_pop(s);
-        if(s->freefunc != NULL) s->freefunc(data);
-    }
-    free(s);
-}
+#define ECT_EXECUTE_MODULE(module, resultstack, abortrun) ECT_EXECUTE_MODULE__(module, resultstack, abortrun)
 
-#define ECT_PREPARE_MODULES()
-    
-#define ECT_RUN_TESTS(testsuite)
-
-
-/**
- * @def ECT_RUN_MODULE(modulename)
- * @brief Runs the specified test module.
- * @param modulename The name of the test module to run. (Do not quote as string)
- * @note The test module must have been previously imported using @ref ETC_IMPORT_MODULE or @ref ETC_IMPORT_MODULES.
- */
- //TODO remove in favor of ECT_RUN_TESTS().
-#define ECT_RUN_MODULE(modulename) ECT_RUN_MODULE__(modulename)
-
-/**
- *  @def ECT_IMPORT_MODULE(modulename)
- *  @brief Imports a test module, making it visible within a test runner.
- *  @param modulename The name of the module to import (Do not quote as string)
- *  @note Modules must be imported before the definition of the test program entry point, i.e. the @c main function.
- */
- //TODO remove, ECT_IMPORT_MODULES renders this obsolete.
-#define ECT_IMPORT_MODULE(modulename) ECT_IMPORT_MODULE__(modulename)
+#define ECT_EVAL_TESTRUN(resultstack, abortrun) ECT_EVAL_TESTRUN__(resultstack, abortrun)
 
 /**
  *  @def ECT_IMPORT_MODULES(...)
@@ -240,48 +117,48 @@ static inline void ect_stack_destroy(void *stack)
  * @{
  */
 /**
- * @def ECT_DECLARE_TESTS(...)
+ * @def ECT_DECL_TESTS(...)
  * @brief Declares which tests in the test module should be visible to test runners.
  * @param ... The names of the tests (Do not quote as strings)
  * @note This macro is required in a valid test module, and should be placed before @ref ECT_EXPORT_MODULE.
  */
-#define ECT_DECLARE_TESTS(...) ECT_DECLARE_TESTS__(__VA_ARGS__)
+#define ECT_DECL_TESTS(...) ECT_DECL_TESTS__(__VA_ARGS__)
 
 /**
- * @def ECT_DECLARE_BEFORE_MODULE(...)
+ * @def ECT_DECL_MODULE_SETUPS(...)
  * @brief Declares which module setups in the test module should be visible to test runners.
  * @param ... The names of the module setups. (Do not quote as strings)
  * @note This macro is required in a valid test module, and should be placed before @ref ECT_EXPORT_MODULE.
  * @note If no module setups is to be used, supply @ref ECT_NO_SETUP as argument.
  */
-#define ECT_DECLARE_BEFORE_MODULE(...) ECT_DECLARE_BEFORE_MODULE__(__VA_ARGS__)
+#define ECT_DECL_MODULE_SETUPS(...) ECT_DECL_MODULE_SETUPS__(__VA_ARGS__)
 
 /**
- * @def ECT_DECLARE_AFTER_MODULE(...)
+ * @def ECT_DECL_MODULE_TEARDOWNS(...)
  * @brief Declares which module teardowns in the test module should be visible to test runners.
  * @param ... The names of the module teardowns. (Do not quote as strings)
  * @note This macro is required in a valid test module, and should be placed before @ref ECT_EXPORT_MODULE.
  * @note If no module teardowns is to be used, supply @ref ECT_NO_TEARDOWN as argument.
  */
-#define ECT_DECLARE_AFTER_MODULE(...) ECT_DECLARE_AFTER_MODULE__(__VA_ARGS__)
+#define ECT_DECL_MODULE_TEARDOWNS(...) ECT_DECL_MODULE_TEARDOWNS__(__VA_ARGS__)
 
 /**
- * @def ECT_DECLARE_BEFORE_TEST(...)
+ * @def ECT_DECL_TEST_SETUPS(...)
  * @brief Declares which test setups in the test module should be visible to test runners.
  * @param ... The names of the test setups. (Do not quote as strings)
  * @note This macro is required in a valid test module, and should be placed before @ref ECT_EXPORT_MODULE.
  * @note If no test setups is to be used, supply @ref ECT_NO_SETUP as argument.
  */
-#define ECT_DECLARE_BEFORE_TEST(...) ECT_DECLARE_BEFORE_TEST__(__VA_ARGS__)
+#define ECT_DECL_TEST_SETUPS(...) ECT_DECL_TEST_SETUPS__(__VA_ARGS__)
 
 /**
- * @def ECT_DECLARE_AFTER_TEST(...)
+ * @def ECT_DECL_TEST_TEARDOWNS(...)
  * @brief Declares which test teardowns in the test module should be visible to test runners.
  * @param ... The names of the test teardowns. (Do not quote as strings)
  * @note This macro is required in a valid test module, and should be placed before @ref ECT_EXPORT_MODULE.
  * @note If no test teardowns is to be used, supply @ref ECT_NO_TEARDOWN as argument.
  */
-#define ECT_DECLARE_AFTER_TEST(...) ECT_DECLARE_AFTER_TEST__(__VA_ARGS__)
+#define ECT_DECL_TEST_TEARDOWNS(...) ECT_DECL_TEST_TEARDOWNS__(__VA_ARGS__)
 /**@}*/
 
 /**
@@ -296,34 +173,34 @@ static inline void ect_stack_destroy(void *stack)
 #define ECT_TEST(funcname) ECT_TEST__(funcname)
 
 /**
- * @def ECT_BEFORE_TEST(funcname)
+ * @def ECT_TEST_SETUP(funcname)
  * @brief Defines a function suitable for use as an ECTest setup function to be ran before each test case.
  * @param funcname The name of the function (Do not quote as string)
  */
-#define ECT_BEFORE_TEST(funcname) ECT_BEFORE_TEST__(funcname)
+#define ECT_TEST_SETUP(funcname) ECT_TEST_SETUP__(funcname)
 
 /**
- * @def ECT_AFTER_TEST(funcname)
+ * @def ECT_TEST_TEARDOWN(funcname)
  * @brief Defines a function suitable for use as an ECTest teardown function to be ran after each test case.
  * @param funcname The name of the function (Do not quote as string)
  */
-#define ECT_AFTER_TEST(funcname) ECT_AFTER_TEST__(funcname)
+#define ECT_TEST_TEARDOWN(funcname) ECT_TEST_TEARDOWN__(funcname)
 
 /**
- * @def ECT_BEFORE_MODULE(funcname)
+ * @def ECT_MODULE_SETUP(funcname)
  * @brief Defines a function suitable for use as an ECTest setup function to be ran before any of the test cases in
  *        a test module.
  * @param funcname The name of the function (Do not quote as string)
  */
-#define ECT_BEFORE_MODULE(funcname) ECT_BEFORE_MODULE__(funcname)
+#define ECT_MODULE_SETUP(funcname) ECT_MODULE_SETUP__(funcname)
 
 /**
- * @def ECT_AFTER_MODULE(funcname)
+ * @def ECT_MODULE_TEARDOWN(funcname)
  * @brief Defines a function suitable for use as an ECTest teardown function to be ran after any of the test cases in
  *        a test module.
  * @param funcname The name of the function (Do not quote as string)
  */
-#define ECT_AFTER_MODULE(funcname) ECT_AFTER_MODULE__(funcname)
+#define ECT_MODULE_TEARDOWN(funcname) ECT_MODULE_TEARDOWN__(funcname)
 /**@}*/
 
 /**
@@ -334,8 +211,9 @@ static inline void ect_stack_destroy(void *stack)
  * @def ECT_SUCCESS()
  * @brief Use to mark a test case as successful.
  *
- * Use to mark a test case as successful. A test case must always exit using either via asserts or ECT_SUCCESS,
- * ECT_FFAIL, ECT_FAIL or ECT_SKIP
+ * Use to mark a test case as successful and immediately terminatest the test.
+ * @note This macro yields the same result as a test that runs to the end of the function, except that it terminates it
+ *       immediately.
  */
 #define ECT_SUCCESS() ECT_SUCCESS__()
 
@@ -343,8 +221,7 @@ static inline void ect_stack_destroy(void *stack)
  * @def ECT_FAIL()
  * @brief Use to mark a test case as failed, providing a message.
  *
- * Use to mark a test case as failed, with a provided message. A test case must always exit using either via asserts or
- * ECT_SUCCESS, ECT_FFAIL, ECT_FAIL or ECT_SKIP
+ * Use to mark a test case as failed and immediately terminatest the test with a provided message
  */
 #define ECT_FAIL(msg) ECT_FAIL__(msg)
 #define ECT_FFAIL(fmt, ...) ECT_FFAIL__(fmt, __VA_ARGS__)
@@ -353,8 +230,7 @@ static inline void ect_stack_destroy(void *stack)
  * @def ECT_SKIP()
  * @brief Use to mark a test case as skipped.
  *
- * Use to mark a test case as skipped. A test case must always exit using either via asserts or ECT_SUCCESS,
- * ECT_FFAIL, ECT_FAIL or ECT_SKIP
+ * Use to mark a test case as skipped and immediately terminates the test.
  */
 #define ECT_SKIP() ECT_SKIP__()
 /**@}*/
@@ -371,6 +247,7 @@ static inline void ect_stack_destroy(void *stack)
  * @param msg The message to print on failed assert.
  */
 #define ECT_ASSERT(expr, msg) ECT_ASSERT__(expr, msg)
+//TODO remove all ECT_FASSERT into ECT_ASSERT, remove the "fmt" argument and document the first arg in __VA_ARGS__ as the format string.
 #define ECT_FASSERT(expr, fmt, ...) ECT_FASSERT__(expr, fmt, __VA_ARGS__)
 
 /**
@@ -494,14 +371,14 @@ static inline void ect_stack_destroy(void *stack)
  */
 /**
  * @def ECT_NO_SETUP
- * @brief Used in @ref ECT_DECLARE_BEFORE_TEST and @ref ECT_DECLARE_BEFORE_MODULE when there are no setup functions.
+ * @brief Used in @ref ECT_DECL_TEST_SETUPS and @ref ECT_DECL_MODULE_SETUPS when there are no setup functions.
  * @ingroup TESTMODCREATE
  */
 #define ECT_NO_SETUP ECT_NO_SETUP__
 
 /**
  * @def ECT_NO_TEARDOWN
- * @brief Used in @ref ECT_DECLARE_AFTER_TEST and @ref ECT_DECLARE_AFTER_MODULE when there are no teardown functions.
+ * @brief Used in @ref ECT_DECL_TEST_TEARDOWNS and @ref ECT_DECL_MODULE_TEARDOWNS when there are no teardown functions.
  * @ingroup TESTMODCREATE
  */
 #define ECT_NO_TEARDOWN ECT_NO_TEARDOWN__
@@ -540,8 +417,10 @@ static inline void ect_stack_destroy(void *stack)
  * @note @p nextname should be the name of the member, in a list node, that points ot the next node.
  */
 //TODO IMPLEMENT
-#define ECT_LLIST_FOREACH(node, list, nextname)
-
+#define ECT_LLIST_FOREACH(type, node, list, nextname) ECT_LLIST_FOREACH__(type, node, list, nextname)
+#define ECT_LLIST_FOREACH__(type, node, list, nextname)\
+        for(type node = list; node != NULL; node = node->nextname)
+ 
 /**@}*/
 
 /* END PUBLIC MACROS */
@@ -571,6 +450,32 @@ static inline void ect_stack_destroy(void *stack)
 #   define ECT_USE_ANSI_ESCAPE__
 #endif
 
+#if defined(__unix__)
+#   define ECT_OPTION_DELIM__ -
+#elif defined(_WIN32)
+#   define ECT_OPTION_DELIM__ /
+#endif
+
+#if defined(__GNUC__)
+#   define ETC_UNUSED__ __attribute__((__unused__))
+#elif defined(_MSC_VER)
+#   define ETC_MSVC_DISABLE_UNUSED__\
+    __pragma(warning(push))\
+    __pragma(warning(disable:4100))
+#   define ETC_MSVC_RESET_UNUSED__\
+    __pragma(wraning(pop))
+#endif
+#ifndef ETC_UNUSED__
+#define ETC_UNUSED__
+#endif
+#ifndef ETC_MSVC_DISABLE_UNUSED__
+#   define ETC_MSVC_DISABLE_UNUSED__
+#endif
+#ifndef ETC_MSVC_RESET_UNUSED__
+#   define ETC_MSVC_RESET_UNUSED__
+#endif
+
+
 #ifndef ECT_ABORT_ON_FAIL
 #   define ECT_ABORT_ON_FAIL 0
 #else
@@ -578,38 +483,174 @@ static inline void ect_stack_destroy(void *stack)
 #   define ECT_ABORT_ON_FAIL 1
 #endif
 
+#ifndef ECT_EXPORT_RESULTS
+#   define ECT_EXPORT_RESULTS 0
+#else
+#   undef ECT_EXPORT_RESULTS
+#   define ECT_EXPORT_RESULTS 1
+#endif
+
 //TODO Look into if uniqueness can be achieved without conc array
-#define ECT_DFOREACH__(item, array, nelem)\
-    for(int ECT_CONC__(array,keep__) = 1, \
-            ECT_CONC__(array,count__) = 0,\
-            ECT_CONC__(array,size__) = nelem; \
-        ECT_CONC__(array,keep__) && ECT_CONC__(array,count__) != ECT_CONC__(array,size__); \
-        ECT_CONC__(array,keep__) = !ECT_CONC__(array,keep__), ECT_CONC__(array,count__)++) \
-      for(item = (array)[ECT_CONC__(array,count__)]; ECT_CONC__(array,keep__); ECT_CONC__(array,keep__) = !ECT_CONC__(array,keep__))
+#define ECT_DFOREACH__(type, item, array, nelem)\
+    for(int ECT_CONC__(item,keep__) = 1, \
+            ECT_CONC__(item,count__) = 0,\
+            ECT_CONC__(item,size__) = nelem; \
+        ECT_CONC__(item,keep__) && ECT_CONC__(item,count__) != ECT_CONC__(item,size__); \
+        ECT_CONC__(item,keep__) = !ECT_CONC__(item,keep__), ECT_CONC__(item,count__)++) \
+      for(type item = (array)[ECT_CONC__(item,count__)]; ECT_CONC__(item,keep__); ECT_CONC__(item,keep__) = !ECT_CONC__(item,keep__))
 
-#define ECT_FOREACH__(item, array) ECT_DFOREACH__(item, array, ECT_SIZEOFARRAY__(array))
+#define ECT_FOREACH__(type, item, array) ECT_DFOREACH__(type, item, array, ECT_SIZEOFARRAY__(array))
 
-#define ECT_MODULE_RUNNER__(modulename) ECT_CONCWU__(modulename, run)
-
-#define ECT_RUN_MODULE__(modulename)\
-    ECT_IF__(ECT_ABORT_ON_FAIL,\
-        do{\
-            ECT_LOG_SEP__();\
-            ECT_FLOG__("[Module Start] Running test module '%s'\n", ECT_STRINGIZE__(modulename));\
-            ect_moduleresult result_ = ECT_MODULE_RUNNER__(modulename)();\
-            if(result_.failed != 0){\
-                ECT_LOG_SEP__();\
-                ECT_LOG__("[Test Run Summary] | Module "#modulename" failed, aborting test run...\n");\
-                return -1;/*TODO setup test evaluation*/\
+#define ECT_ARG_CHECK_FOR_LIST__(argc, argv, testsuite)\
+    ECT_DFOREACH__(char *, ect_arg_, argv, argc){\
+        if(strcmp(ect_arg_, ECT_STRINGIZE__(ECT_OPTION_DELIM__)"l") == 0){\
+            ECT_LLIST_FOREACH__(struct ect_stack_node__ *, ect_node_, testsuite->modules->head, next){\
+                ect_module__ *ect_mod_ = ect_node_->data;\
+                ECT_DFOREACH__(ect_test__ , ect_test_, ect_mod_->tests->array, ect_mod_->tests->count){\
+                    printf("%s.%s\n", ect_mod_->name, ect_test_.name);\
+                }\
             }\
-        }while(0),\
-        ECT_MODULE_RUNNER__(modulename)();\
-    )
+            return 0;\
+        }\
+    }
 
-#define ECT_RUNNER_START__ \
+#define ECT_RUNNER__()\
+    int main(int argc, char **argv)\
+    {\
+        (void)argc;(void)argv;/*TODO remove*/\
+        ect_testsuite *ect_testsuite_ = ect_testsuite_create();\
+        ECT_PERPARE_ALL_MODULES__(ect_testsuite_);\
+        \
+        if(argc > 0){\
+            ECT_ARG_CHECK_FOR_LIST__(argc, argv, ect_testsuite_)\
+          /*TODO check if only specific tests/modules should be ran*/ /*ECT_ARG_MARK_FOR_RUN__(argc, argv)*/\
+        }\
+        \
+        ECT_RUN_TESTSUITE__(ect_testsuite_);\
+        ECT_WHEN__(ECT_EXPORT_RESULTS,\
+            ect_export_results(ect_testsuite_->results);\
+        )\
+        return 0;\
+    }struct ect_dummy__/*forward declare to swallow semicolon*/
+    
+#define ECT_RUN_TESTSUITE__(testsuite)\
+    do{\
+        /*ECT_RUN_TESTS__*/\
+        _Bool ect_abort_testrun_ = 0;\
+        ECT_STACK_FOREACH_POP__(ect_module__ *, ect_curmodule_, testsuite->modules){\
+            if(!ect_curmodule_->run){\
+                free(ect_curmodule_);\
+                continue;\
+            }\
+            ECT_EXECUTE_MODULE__(ect_curmodule_, testsuite->results, ect_abort_testrun_);\
+        }\
+        \
+        /*TODO evaluate test run (ECT_EVAL_TESTRUN__)*/\
+        ECT_EVAL_TESTRUN__(testsuite->results, ect_abort_testrun_);\
+    }while(0)
+        
+#define ECT_PERPARE_ALL_MODULES__(testsuite)\
+    do{\
+        ect_module__ *(*ect_importer_)(void);\
+        ECT_FOREACH__(, ect_importer_, ect_module_importers__){\
+            ect_stack_push__(testsuite->modules, ect_importer_());/*TODO Change to map structure*/\
+        }\
+    }while(0)
 
-#define ECT_RUNNER_END__ \
-    etc_runner_eval__:
+#define ECT_BUILD_MODULE_ARRAY__(x) ECT_STRINGIZE__(x), 
+#define ECT_PREPARE_MODULES__(testsuite, ...)\
+    do{\
+        ect_module__ *(*ect_importer_)(void);\
+        char *ect_modulenames_[] = {ECT_LOOP__(ECT_BUILD_MODULE_ARRAY__, __VA_ARGS__)};\
+        ect_module__ *ect_modules_[ECT_SIZEOFARRAY__(ect_modulenames_)] = {0};\
+        int ect_cur_offset_ = 0;\
+        ECT_FOREACH__(, ect_importer_, ect_module_importers__){\
+            ect_module__ *ect_module_ = ect_importer_();\
+            ECT_FOREACH__(char *, ect_req_name_, ect_modulenames_){\
+                if(strcmp(ect_req_name_, ect_module_->name) == 0){\
+                    ect_modules_[ect_cur_offset_++] = ect_module_;\
+                }\
+            }\
+        }\
+        ECT_FOREACH__(ect_module__ *, ect_module_, ect_modules_){ect_stack_push__(testsuite->modules, ect_module_);}\
+    }while(0)
+        
+#define ECT_EXECUTE_MODULE__(module, resultstack, abortrun)\
+    do{\
+        ect_moduleresult__ ect_modresult_ = {\
+            .count = module->tests->count,\
+            .failed = 0,\
+            .success = 0,\
+            .skipped = module->tests->count,\
+        };\
+        \
+        ECT_DFOREACH__(ect_setup__, ect_msfunc_, module->modsetup->array, module->modsetup->count){ect_msfunc_();}\
+        ECT_DFOREACH__(ect_test__, ect_test_, module->tests->array, module->tests->count){\
+        if(!ect_test_.run) break;\
+        \
+        ECT_EXECUTE_TEST__(ect_test_, module, ect_modresult_, resultstack, abortrun);\
+        \
+        ECT_WHEN__(ECT_ABORT_ON_FAIL, if(abortrun) goto ect_goto_module_cleanup_;)\
+        }\
+        ect_goto_module_cleanup_:\
+        ECT_DFOREACH__(ect_setup__, ect_mtdfunc_, module->modteardown->array, module->modteardown->count){ect_mtdfunc_();}\
+        ECT_FLOG__("[Module Summary] Module '%s' | Tests: %zu Success: %zu Failed: %zu Skipped: %zu\n",\
+                   ect_curmodule_->name,\
+                   ect_modresult_.count,\
+                   ect_modresult_.success,\
+                   ect_modresult_.failed,\
+                   ect_modresult_.skipped);\
+        free(module);\
+        ECT_WHEN__(ECT_ABORT_ON_FAIL, if(abortrun) goto ect_goto_test_eval_;)\
+    }while(0)
+        
+#define ECT_EVAL_TESTRUN__(resultstack, abortrun)\
+    do{\
+        ECT_WHEN__(ECT_ABORT_ON_FAIL, if(abortrun){\
+            ect_goto_test_eval_:\
+            ECT_LOG__("[Test Summary] Test run aborted due to failing module with ECT_ABORT_ON_FAIL defined...");\
+        })\
+    }while(0)
+
+#define ECT_EXECUTE_TEST__(test, module, moduleresult, resultstack, abortrun)\
+    do{\
+        ECT_DFOREACH__(ect_setup__, ect_tsfunc_, module->testsetup->array, module->testsetup->count){ect_tsfunc_();}\
+        ect_caseresult__ ect_result_ = {.msg = NULL, .result = ECT_CASERES_SUCCESS};\
+        test.func(&ect_result_);\
+        ect_stack_push__(resultstack, ect_testresult_new__(ect_result_.result,\
+                                                         module->name,\
+                                                         test.name));\
+        switch(ect_result_.result){\
+            case ECT_CASERES_SUCCESS:{\
+                moduleresult.success++;\
+                moduleresult.skipped--;\
+                ECT_WHEN__(ETC_LOG_SUCCESS__, ECT_FLOG__("["ECT_PRINT_WITH_COLOR__(ECT_KGRN__,"SUCCESS")"]\t%s.%s\n",\
+                    module->name,\
+                    test.name);)\
+            }break;\
+            \
+            case ECT_CASERES_FAILED:{\
+                moduleresult.failed++;\
+                moduleresult.skipped--;\
+                ECT_WHEN__(ETC_LOG_FAIL__,\
+                    ECT_FLOG__("["ECT_PRINT_WITH_COLOR__(ECT_KRED__, "FAILED")"]\t%s.%s | %s\n",\
+                        module->name,\
+                        test.name,\
+                        ect_result_.msg);\
+                    free(ect_result_.msg);)\
+                ECT_WHEN__(ECT_ABORT_ON_FAIL,\
+                    ECT_LOG_SEP__();\
+                    ECT_FLOG__("[Module Summary] Module '%s' failed, aborting test...\n\n", ect_curmodule_->name);\
+                    abortrun = 1;)\
+            }break;\
+            case ECT_CASERES_SKIPPED: {\
+                ECT_WHEN__(ETC_LOG_SKIP__, ECT_FLOG__("["ECT_PRINT_WITH_COLOR__(ECT_KYEL__,"SKIPPED")"]\t%s.%s\n",\
+                    module->name,\
+                    test.name);)\
+            }break;\
+        }\
+        ECT_DFOREACH__(ect_teardown__, ect_ttdfunc_, module->testteardown->array, module->testteardown->count){ect_ttdfunc_();}\
+    }while(0)
 
 /*** UTILITY MACROS ***/
 #define ECT_PCON__(x, y) x##y
@@ -620,18 +661,57 @@ static inline void ect_stack_destroy(void *stack)
 #define ECT_IF___1(t, f) t
 #define ECT_IF___0(t, f) f
 #define ECT_IF__(c, t, f) ECT_CONCWU__(ECT_IF__, c)(ECT_ESC_PAR__(t),ECT_ESC_PAR__(f))
+#define ECT_WHEN__(c, t) ECT_IF__(c, t, )
 #define ECT_PSTRINGIZE__(x) #x
 #define ECT_STRINGIZE__(x) ECT_PSTRINGIZE__(x)
+#define ECT_ADDRESSOF__(x) &x,
 
 /*** LOOP BASE MACRO ***/
-#define ECT_ARG_N__(_1, _2, _3, _4, _5, _6, _7, _8, _9, N, ...) N
-#define ECT_RSEQ_N__() 9, 8, 7, 6, 5, 4, 3, 2, 1, 0
-#define ECT_NARG___(...) ECT_ARG_N__(__VA_ARGS__)
-#define ECT_NARG__(...) ECT_NARG___(__VA_ARGS__, ECT_RSEQ_N__())
+#define ECT_EXPAND__(x) x
+#define ECT_FIRSTARG__(x, ...) (x)
+#define ECT_RESTARGS__(x, ...) (__VA_ARGS__)
 
-#define ECT_LOOP___(loop_pattern, N, ...) ECT_CONC__(loop_pattern, N)(__VA_ARGS__)
+#define ECT_NUM_ARGS___(X100, X99, X98, X97, X96, X95, X94, X93, X92, X91, X90, X89, X88, X87, X86, X85, X84, X83, X82,\
+                        X81, X80, X79, X78, X77, X76, X75, X74, X73, X72, X71, X70, X69, X68, X67, X66, X65, X64, X63,\
+                        X62, X61, X60, X59, X58, X57, X56, X55, X54, X53, X52, X51, X50, X49, X48, X47, X46, X45, X44,\
+                        X43, X42, X41, X40, X39, X38, X37, X36, X35, X34, X33, X32, X31, X30, X29, X28, X27, X26, X25,\
+                        X24, X23, X22, X21, X20, X19, X18, X17, X16, X15, X14, X13, X12, X11, X10, X9, X8, X7, X6, X5,\
+                        X4, X3, X2, X1, N, ...)   N
 
-#define ECT_LOOP__(loop_pattern, ...) ECT_LOOP___(loop_pattern, ECT_NARG__(__VA_ARGS__), __VA_ARGS__)
+#define ECT_NUM_ARGS__(...) ECT_NUM_ARGS___(__VA_ARGS__,\
+                        100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78,\
+                        77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55,\
+                        54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32,\
+                        31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9,\
+                        8, 7, 6, 5, 4, 3, 2, 1)
+
+#define ECT_MLOOP__1(m, list)
+#define ECT_MLOOP__2(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__1(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__3(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__2(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__4(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__3(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__5(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__4(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__6(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__5(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__7(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__6(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__8(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__7(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__9(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__8(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__10(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__9(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__11(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__10(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__12(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__11(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__13(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__12(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__14(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__13(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__15(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__14(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__16(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__15(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__17(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__16(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__18(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__17(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__19(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__18(m, ECT_RESTARGS__ list)
+#define ECT_MLOOP__20(m, list) ECT_EXPAND__(m ECT_FIRSTARG__ list) ECT_MLOOP__19(m, ECT_RESTARGS__ list)
+//TODO remove loops constructs that arent neccessary and can be replaced by this.
+#define ECT_MLOOP3__(n, m, list) ECT_MLOOP__##n(m, list)
+#define ECT_MLOOP2__(n, m, list) ECT_MLOOP3__(n, m, list)
+
+#define ECT_MLOOP__(macro, list) ECT_MLOOP2__(ECT_NUM_ARGS__ list, macro, list)
+
+#define ECT_LOOP__(macro, ...) ECT_MLOOP__(macro, (__VA_ARGS__,))
 
 /*** END LOOP BASE MACRO ***/
 /*** END UTILITY MACROS ***/
@@ -640,167 +720,85 @@ static inline void ect_stack_destroy(void *stack)
 #define ECT_SIZEOFARRAY__(arrname) \
     (sizeof(arrname)/sizeof(*(arrname)))
 
-#define ECT_FUNC_PTR__(type, name) type(*name)(void)
+#define ECT_FUNC_PTR__(type, name) void(*name)(type)
 #define ECT_FUNC_PTR_ARRAY__(type, arrayname) ECT_FUNC_PTR__(type, arrayname[])
-#define ECT_FUNC_PTR_ARRAYSIZE__(arrayname) arrayname##_size
-#define ECT_DECL_FUNC_PTR_ARRAYSIZE__(arrayname) size_t ECT_FUNC_PTR_ARRAYSIZE__(arrayname)
 /*** END FUNCTION POINTER DEFINES ***/
 
 /*** TEST/SETUP/TEARDOWN DECLARES AND DEFINES ***/
-#define ECT_DECLFUNC__(type, name) static type name(void)
+#define ECT_DECLFUNC__(type, name) static void name(type)
 
-#define ECT_DECLARE_TESTS__(...) ECT_EXPORT_FUNCS__(TARRAY, ect_caseresult, __VA_ARGS__)
-#define ECT_DECLARE_BEFORE_MODULE__(...) ECT_EXPORT_FUNCS__(BMARRAY, void, __VA_ARGS__)
-#define ECT_DECLARE_AFTER_MODULE__(...) ECT_EXPORT_FUNCS__(AMARRAY, void, __VA_ARGS__)
-#define ECT_DECLARE_BEFORE_TEST__(...) ECT_EXPORT_FUNCS__(BTARRAY, void, __VA_ARGS__)
-#define ECT_DECLARE_AFTER_TEST__(...) ECT_EXPORT_FUNCS__(ATARRAY, void, __VA_ARGS__)
+#define ECT_DECL_TESTS__(...) ECT_EXPORT_TESTS__(__VA_ARGS__)
+//#define ECT_DECL_TESTS__(...) ECT_EXPORT_FUNCS__(ect_tarray, ect_testarray__, void *, __VA_ARGS__)
+#define ECT_DECL_MODULE_SETUPS__(...) ECT_EXPORT_FUNCS__(ect_bmarray, ect_setuparray__, void, __VA_ARGS__)
+#define ECT_DECL_MODULE_TEARDOWNS__(...) ECT_EXPORT_FUNCS__(ect_amarray, ect_teardownarray__, void, __VA_ARGS__)
+#define ECT_DECL_TEST_SETUPS__(...) ECT_EXPORT_FUNCS__(ect_btarray, ect_setuparray__, void, __VA_ARGS__)
+#define ECT_DECL_TEST_TEARDOWNS__(...) ECT_EXPORT_FUNCS__(ect_atarray, ect_teardownarray__, void, __VA_ARGS__)
 
-#define ECT_TEST__(funcname) ECT_DECLFUNC__(ect_caseresult, funcname)
-#define ECT_BEFORE_TEST__(funcname) ECT_DECLFUNC__(void, funcname)
-#define ECT_AFTER_TEST__(funcname) ECT_DECLFUNC__(void, funcname)
-#define ECT_BEFORE_MODULE__(funcname) ECT_DECLFUNC__(void, funcname)
-#define ECT_AFTER_MODULE__(funcname) ECT_DECLFUNC__(void, funcname)
+
+#define ECT_TEST__(funcname) \
+    ETC_MSVC_DISABLE_UNUSED__\
+    ECT_DECLFUNC__(ETC_UNUSED__ void *state, funcname)\
+    ETC_MSVC_RESET_UNUSED__
+#define ECT_TEST_SETUP__(funcname) ECT_DECLFUNC__(void, funcname)
+#define ECT_TEST_TEARDOWN__(funcname) ECT_DECLFUNC__(void, funcname)
+#define ECT_MODULE_SETUP__(funcname) ECT_DECLFUNC__(void, funcname)
+#define ECT_MODULE_TEARDOWN__(funcname) ECT_DECLFUNC__(void, funcname)
 
 /*** END TEST/SETUP/TEARDOWN DECLARES AND DEFINES ***/
 
 /*** MODULE IMPORT ***/
 #define ECT_IMPORT_MODULE__(modulename)\
-    extern ect_module *ECT_CONCWU__(modulename, import)(void)
+    extern ect_module__ *ECT_CONCWU__(modulename, import)(void);
 
+#define ECT_BUILD_IMPORTER__(arg) &ECT_CONCWU__(arg, import),
 #define ECT_IMPORT_MODULES__(...)\
-    ECT_LOOP__(ECT_IMPORT_MODULE__, __VA_ARGS__);\
-    ect_module* (*ect_module_importers__[])(void) = {ECT_LOOP__(ECT_GET_REF__, _import, __VA_ARGS__)}
+    ECT_LOOP__(ECT_IMPORT_MODULE__, __VA_ARGS__)\
+    ect_module__* (*ect_module_importers__[])(void) = {ECT_LOOP__(ECT_BUILD_IMPORTER__, __VA_ARGS__)}
 
 /*** END MODULE IMPORT ***/
 
-/*** MODULE EXPORT ***/
-#define ECT_EXPORT_FUNCS__(arrname, type, ...)\
-    ECT_DECLEXPORT_FUNC__(type, __VA_ARGS__)\
-    static ECT_FUNC_PTR_ARRAY__(type, arrname) = {\
-    ECT_LOOP__(ECT_GET_REF__, ,__VA_ARGS__)\
-    };\
-    static ECT_DECL_FUNC_PTR_ARRAYSIZE__(arrname) = ECT_SIZEOFARRAY__(arrname)
+#define ECT_BUILD_TESTARRAY__(x) { .name = ECT_STRINGIZE__(x), .func = &x, .run = 1},
 
-#define ECT_EXPORT_MODULE__(modulename) \
-    ect_moduleresult ECT_CONCWU__(modulename, run)(void)\
-    {\
-        struct ect_moduleresult result_ = {0};\
-            /*Run module setup functions*/\
-            ECT_FOREACH__(ECT_FUNC_PTR__(void, bmfunc), BMARRAY){ bmfunc(); }\
-            /*Loop over all test functions*/\
-            ECT_FOREACH__(ECT_FUNC_PTR__(ect_caseresult, tfunc), TARRAY){\
-                /*Run test setup functions*/\
-                ECT_FOREACH__(ECT_FUNC_PTR__(void, btfunc), BTARRAY){ btfunc(); }\
-                /*Run test function*/\
-                result_.count++;\
-                ect_caseresult caseresult_ = tfunc();\
-                switch(caseresult_.result){\
-                    case ECT_CASERES_SUCCESS:{\
-                        result_.success++;\
-                        ECT_IF__(ETC_LOG_SUCCESS__,\
-                            ECT_FLOG__("["ECT_PRINT_WITH_COLOR__(ECT_KGRN__,"SUCCESS")"]\t%s.%s\n",\
-                                    ECT_STRINGIZE__(modulename), \
-                                    caseresult_.testname),);\
-                    }break;\
-                    case ECT_CASERES_FAILED:{\
-                        result_.failed++;\
-                        ECT_IF__(ETC_LOG_FAIL__,\
-                            ECT_FLOG__("["ECT_PRINT_WITH_COLOR__(ECT_KRED__, "FAILED")"]\t%s.%s | %s\n",\
-                                    ECT_STRINGIZE__(modulename),\
-                                    caseresult_.testname,\
-                                    caseresult_.msg);\
-                            free(caseresult_.msg);,)\
-                        ECT_IF__(ECT_ABORT_ON_FAIL,\
-                            ECT_LOG_SEP__();\
-                            ECT_FLOG__("[Module Summary] Module '%s' failed, aborting test...\n\n",ECT_STRINGIZE__(modulename));\
-                            return result_;,)\
-                    }break;\
-                    case ECT_CASERES_SKIPPED:{\
-                        result_.skipped++;\
-                        ECT_IF__(ETC_LOG_SKIP__,\
-                            ECT_FLOG__("["ECT_PRINT_WITH_COLOR__(ECT_KYEL__,"SKIPPED")"]\t%s.%s\n",\
-                                    ECT_STRINGIZE__(modulename), \
-                                    caseresult_.testname);,)\
-                    }break;\
-                }\
-                /*Run test teardown functions*/\
-                ECT_FOREACH__(ECT_FUNC_PTR__(void, atfunc), BTARRAY){ atfunc(); }\
-        }\
-        /*Run module teardown functions*/\
-        ECT_FOREACH__(ECT_FUNC_PTR__(void, amfunc), AMARRAY){ amfunc(); }\
-        ECT_FLOG__("[Module Summary] Module '%s' | Tests: %d Success: %d Failed: %d Skipped: %d\n", ECT_STRINGIZE__(modulename),\
-                result_.count, result_.success, result_.failed, result_.skipped);\
-        ECT_LOG_SEP__();\
-        return result_;\
+/*** MODULE EXPORT ***/
+#define ECT_EXPORT_TEST__(func) static void func(void *state);
+#define ECT_EXPORT_TESTS__(...)\
+    ECT_LOOP__(ECT_EXPORT_TEST__, __VA_ARGS__)\
+    static ect_test__ ect_tarray_static_[] = {\
+        ECT_LOOP__(ECT_BUILD_TESTARRAY__, __VA_ARGS__)\
+    };\
+    static ect_testarray__ ect_tarray_ = {\
+        .array = ect_tarray_static_,\
+        .count = ECT_SIZEOFARRAY__(ect_tarray_static_)\
     }
 
-/*** END MODULE EXPORT ***/
+#define ECT_EXPORT_SETUPTEARDOWN__(func) static void func(void);
+#define ECT_EXPORT_FUNCS__(arrname, arrtype, type, ...)\
+    ECT_LOOP__(ECT_EXPORT_SETUPTEARDOWN__, __VA_ARGS__)\
+    static ECT_FUNC_PTR_ARRAY__(type, ECT_CONC__(arrname,static_)) = {\
+        ECT_LOOP__(ECT_ADDRESSOF__, __VA_ARGS__)\
+    };\
+    static arrtype arrname = {\
+        .array = ECT_CONC__(arrname,static_),\
+        .count = ECT_SIZEOFARRAY__(ECT_CONC__(arrname,static_))\
+    }
 
-/*** EXPORT LOOPS ***/
-#define ECT_GET_REF__2(appender, arg) &arg##appender
-#define ECT_GET_REF__3(appender, arg, ...) &arg##appender, ECT_GET_REF__2(appender, __VA_ARGS__)
-#define ECT_GET_REF__4(appender, arg, ...) &arg##appender, ECT_GET_REF__3(appender, __VA_ARGS__)
-#define ECT_GET_REF__5(appender, arg, ...) &arg##appender, ECT_GET_REF__4(appender, __VA_ARGS__)
-#define ECT_GET_REF__6(appender, arg, ...) &arg##appender, ECT_GET_REF__5(appender, __VA_ARGS__)
-#define ECT_GET_REF__7(appender, arg, ...) &arg##appender, ECT_GET_REF__6(appender, __VA_ARGS__)
-#define ECT_GET_REF__8(appender, arg, ...) &arg##appender, ECT_GET_REF__7(appender, __VA_ARGS__)
-#define ECT_GET_REF__9(appender, arg, ...) &arg##appender, ECT_GET_REF__8(appender, __VA_ARGS__)
-#define ECT_GET_REF__10(appender, arg, ...) &arg##appender, ECT_GET_REF__9(appender, __VA_ARGS__)
-#define ECT_GET_REF__11(appender, arg, ...) &arg##appender, ECT_GET_REF__10(appender, __VA_ARGS__)
-#define ECT_GET_REF__12(appender, arg, ...) &arg##appender, ECT_GET_REF__11(appender, __VA_ARGS__)
-#define ECT_GET_REF__13(appender, arg, ...) &arg##appender, ECT_GET_REF__12(appender, __VA_ARGS__)
-#define ECT_GET_REF__14(appender, arg, ...) &arg##appender, ECT_GET_REF__13(appender, __VA_ARGS__)
-#define ECT_GET_REF__15(appender, arg, ...) &arg##appender, ECT_GET_REF__14(appender, __VA_ARGS__)
-#define ECT_GET_REF__16(appender, arg, ...) &arg##appender, ECT_GET_REF__15(appender, __VA_ARGS__)
-#define ECT_GET_REF__17(appender, arg, ...) &arg##appender, ECT_GET_REF__16(appender, __VA_ARGS__)
-#define ECT_GET_REF__18(appender, arg, ...) &arg##appender, ECT_GET_REF__17(appender, __VA_ARGS__)
-#define ECT_GET_REF__19(appender, arg, ...) &arg##appender, ECT_GET_REF__18(appender, __VA_ARGS__)
-
-#define ECT_DECLEXPORT_FUNC__1(type, arg) ECT_DECLFUNC__(type, arg);
-#define ECT_DECLEXPORT_FUNC__2(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__1(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__3(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__2(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__4(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__3(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__5(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__4(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__6(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__5(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__7(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__6(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__8(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__7(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__9(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__8(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__10(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__9(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__11(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__10(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__12(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__11(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__13(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__12(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__14(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__13(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__15(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__14(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__16(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__15(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__17(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__16(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__18(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__17(type, __VA_ARGS__)
-#define ECT_DECLEXPORT_FUNC__19(type, arg, ...) ECT_DECLFUNC__(type, arg); ECT_DECLEXPORT_FUNC__18(type, __VA_ARGS__)
-
-#define ECT_DECLEXPORT_FUNC__(type, ...) \
-    ECT_LOOP___(ECT_DECLEXPORT_FUNC__, ECT_NARG__(__VA_ARGS__), type, __VA_ARGS__)
-/*** END EXPORT LOOPS ***/
-
-/*** IMPORT LOOPS ***/
-#define ECT_IMPORT_MODULE__1(arg) ECT_IMPORT_MODULE__(arg)
-#define ECT_IMPORT_MODULE__2(arg, ...) ECT_IMPORT_MODULE__(arg); ECT_IMPORT_MODULE__1(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__3(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__2(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__4(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__3(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__5(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__4(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__6(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__5(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__7(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__6(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__8(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__7(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__9(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__8(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__10(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__9(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__11(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__10(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__12(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__11(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__13(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__12(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__14(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__13(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__15(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__14(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__16(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__15(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__17(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__16(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__18(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__17(__VA_ARGS__)
-#define ECT_IMPORT_MODULE__19(arg, ...) ECT_IMPORT_MODULE__(arg) ECT_IMPORT_MODULE__18(__VA_ARGS__)
-/*** END IMPORT LOOPS ***/
+#define ECT_EXPORT_MODULE__(modulename) \
+    ect_module__ *ECT_CONCWU__(modulename, import)(void)\
+    {\
+        ect_module__ ect_modinit_ = {\
+            .name = ECT_STRINGIZE__(modulename),\
+            .run = 1,\
+            .modteardown = &ect_amarray,\
+            .modsetup = &ect_bmarray,\
+            .testteardown = &ect_atarray,\
+            .testsetup = &ect_btarray,\
+            .tests = &ect_tarray_\
+        };\
+        ect_module__ *ect_modptr_ = malloc(sizeof *ect_modptr_);\
+        if(ect_modptr_ == NULL) abort(); /*FIXME better handling*/\
+        memcpy(ect_modptr_, &ect_modinit_, sizeof *ect_modptr_);\
+        return ect_modptr_;\
+    }struct ect_dummy__/*forward declare to swallow semicolon*/
 
 /*** END MODULE EXPORT ***/
 
@@ -834,17 +832,20 @@ static inline void ect_stack_destroy(void *stack)
 #   ifdef _GNU_SOURCE
 #       define ECT_FFAIL__(fmt, ...) \
             do{\
-                char *ect_failmsg_;\
-                asprintf(&ect_failmsg_, fmt, __VA_ARGS__);\
-                return ECT_CASERES__(ECT_CASERES_FAILED, ect_failmsg_);\
+                caseresult__ *ect_result_ = state;\
+                asprintf(&ect_result_->msg, fmt, __VA_ARGS__);\
+                ect_result_->result = ECT_CASERES_FAILED;
+                return;\
             }while(0)
 #   else
 #       define ECT_FFAIL__(fmt, ...) \
             do{\
+                ect_caseresult__ *ect_result_ = state;\
                 int ect_failmsgsize_ = snprintf(NULL, 0, fmt, __VA_ARGS__);\
-                char *ect_failmsg_ = malloc(ect_failmsgsize_+1);\
-                snprintf(ect_failmsg_, ect_failmsgsize_+1, fmt, __VA_ARGS__);\
-                return ECT_CASERES__(ECT_CASERES_FAILED, ect_failmsg_);\
+                ect_result_->msg = malloc(ect_failmsgsize_+1);\
+                snprintf(ect_result_->msg, ect_failmsgsize_+1, fmt, __VA_ARGS__);\
+                ect_result_->result = ECT_CASERES_FAILED;\
+                return;\
             }while(0)
 #   endif
 #else
@@ -859,14 +860,18 @@ static inline void ect_stack_destroy(void *stack)
 #else
 #   define ETC_LOG_SKIP__ 0
 #endif
-#define ECT_SKIP__() return ECT_CASERES__(ECT_CASERES_SKIPPED, NULL)
+#define ECT_SKIP__()\
+    do{\
+        ((ect_caseresult__*)(state))->result = ECT_CASERES_SKIPPED;\
+        return;\
+    }while(0)
 
 #if ECT_LOG_LEVEL >= 3
 #   define ETC_LOG_SUCCESS__ 1
 #else
 #   define ETC_LOG_SUCCESS__ 0
 #endif
-#define ECT_SUCCESS__() return ECT_CASERES__(ECT_CASERES_SUCCESS, NULL)
+#define ECT_SUCCESS__() return
 /*** END TEST CASE EXITS ***/
 
 /*** ASSERT ***/
@@ -935,9 +940,155 @@ static inline void ect_stack_destroy(void *stack)
 
 /*** END ASSERT ***/
 
+/*** DATA STRUCTURES ***/
+typedef void(*ect_testfunc)(void *state);
+typedef void(*ect_setup__)(void);
+typedef void(*ect_teardown__)(void);
+
+typedef struct {
+    size_t count;
+    size_t success;
+    size_t failed;
+    size_t skipped;
+}ect_moduleresult__;
+
+typedef enum{
+    ECT_CASERES_SUCCESS,
+    ECT_CASERES_FAILED,
+    ECT_CASERES_SKIPPED
+}ect_caseresenum__;
+
+typedef struct {
+    ect_caseresenum__ result;
+    const char *modulename;
+    const char *testname;
+}ect_testresult__;
+
+static inline ect_testresult__ *ect_testresult_new__(ect_caseresenum__ result, const char *modulename, const char *testname)
+{
+    ect_testresult__ *res = malloc(sizeof *res);
+    res->result = result;
+    res->modulename = modulename;
+    res->testname = testname;
+    return res;
+}
+
+typedef struct{
+    ect_caseresenum__ result;
+    char *msg;
+}ect_caseresult__;
+
+typedef void(*ect_freefunc)(void *item);
+
+struct ect_stack_node__{
+    void *data;
+    struct ect_stack_node__ *next;
+};
+
+typedef struct ect_stack__{
+    ect_freefunc freefunc;
+    struct ect_stack_node__ *head;
+}ect_stack__;
+
+static inline ect_stack__ *ect_stack_create__(ect_freefunc freefunc)
+{
+    ect_stack__ *stack = malloc(sizeof *stack);
+    if(stack == NULL) return NULL;
+    stack->head = NULL;
+    stack->freefunc = freefunc;
+    return stack;
+}
+
+static inline int ect_stack_push__(ect_stack__ *stack, void *data)
+{
+    if(stack == NULL) return -1;
+    struct ect_stack_node__ *node = malloc(sizeof *node);
+    if(node == NULL) return -2;
+    node->data = data;
+    node->next = stack->head;
+    stack->head = node;
+    return 0;
+}
+
+static inline void *ect_stack_pop__(ect_stack__ *stack)
+{
+    if(stack == NULL || stack->head == NULL) return NULL;
+    struct ect_stack_node__ *node = stack->head;
+    stack->head = stack->head->next;
+    void *data = node->data;
+    free(node);
+    return data;
+}
+
+#define ECT_STACK_FOREACH_POP__(type, item, stack)\
+    for(type item = ect_stack_pop__(stack); item != NULL; item = ect_stack_pop__(stack))
+
+static inline void ect_stack_destroy__(void *stack)
+{
+    if(stack == NULL) return;
+    ect_stack__ *s = stack;
+    void *data;
+    while(s->head != NULL){
+        data = ect_stack_pop__(s);
+        if(s->freefunc != NULL) s->freefunc(data);
+    }
+    free(s);
+}
+
+typedef struct{
+    const char *name;
+    ect_testfunc func;
+    _Bool run;
+}ect_test__;
+
+#define ECT_DEFINE_ARRAYTYPE__(type, name)\
+    typedef struct name{\
+        size_t count;\
+        type *array;\
+    }name
+
+ECT_DEFINE_ARRAYTYPE__(ect_setup__, ect_setuparray__);
+ECT_DEFINE_ARRAYTYPE__(ect_teardown__, ect_teardownarray__);
+ECT_DEFINE_ARRAYTYPE__(ect_test__, ect_testarray__);
+
+typedef struct ect_module__{
+    const char *name;
+    _Bool run;
+    ect_setuparray__ *testsetup;
+    ect_teardownarray__ *testteardown;
+    ect_setuparray__ *modsetup;
+    ect_teardownarray__ *modteardown;
+    ect_testarray__ *tests;
+}ect_module__;
+
+static inline ect_testsuite *ect_testsuite_create()
+{
+    ect_testsuite *ts = malloc(sizeof *ts);
+    ts->modules = ect_stack_create__(NULL);
+    ts->results = ect_stack_create__(NULL);
+    return ts;
+}
+
+static inline void ect_testsuite_destroy(void *testsuite)
+{
+    if(testsuite == NULL) return;
+    ect_testsuite *suite = testsuite;
+    ECT_STACK_FOREACH_POP__(ect_module__ *, module, suite->results){free(module);}
+    ect_stack_destroy__(suite->modules);
+    ECT_STACK_FOREACH_POP__(ect_testresult__ *, result, suite->results){free(result);}
+    ect_stack_destroy__(suite->results);
+    free(suite);
+}
+
+static inline void ect_export_results(ect_testsuite *testsuite)
+{
+    (void)testsuite; //TODO Implement
+}
+/*** END DATA STRUCTURES ***/
+
 static inline void ect_nosetupteardown__(void){}
 #define ECT_NO_SETUP__ ect_nosetupteardown__
 #define ECT_NO_TEARDOWN__ ect_nosetupteardown__
-/*** END RESULT STRUCTS AND DUMMY FUNCTIONS ***/
+
 /// @endcond
 #endif // _ECTEST_H__
