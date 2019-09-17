@@ -1,4 +1,0 @@
-#ifndef _ECTEST_INT_RESULT_H__
-#define _ECTEST_INT_RESULT_H__
-
-#endif //_ECTEST_INT_RESULT_H__
