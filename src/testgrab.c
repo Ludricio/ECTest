@@ -1,5 +1,4 @@
-#include <ectest.h>
-#include <stdio.h>
+#include <ectest_master.h>
 
 void tg_testgrab()
 {
