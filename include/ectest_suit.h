@@ -1,7 +1,7 @@
 #ifndef ECTEST_SUIT__
 #define ECTEST_SUIT__
 
-#define ECT_SUIT_NEW(suitname, X...)                                            \
+#define ECT_SUIT_NEW__(suitname, X...)                                          \
     ({                                                                          \
         ect_module *modules[] = {X};                                            \
         size_t modulecount = ECT_SIZEOF_ARRAY(modules);                         \
@@ -14,7 +14,7 @@
         suit;                                                                   \
     })
  
-#define ECT_SUIT_FREE(suit)                                                     \
+#define ECT_SUIT_FREE__(suit)                                                   \
     ({                                                                          \
         if(suit){                                                               \
             for(int i = 0; i < suit->modulecount; i++){                         \

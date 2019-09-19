@@ -3,6 +3,7 @@
 void tg_testgrab()
 {
     printf("yo mother fucker\n");
+    float x = 2/0;
 }
 
 void tg_test()
