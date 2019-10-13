@@ -37,22 +37,22 @@
         
 #define ECT_ELOG__(fmt, x...)                                                  \
 do{                                                                             \
-    if(ECT_LOG_LEVEL__ >= 1) ECT_LOG__(fmt, x);                                 \
+    if(ECT_LOG_LEVEL__ >= 1) ECT_LOG__(fmt, ##x);                                 \
 }while(0)
 
 #define ECT_WLOG__(fmt, x...)                                                  \
 do{                                                                             \
-    if(ECT_LOG_LEVEL__ >= 2) ECT_LOG__(fmt, x);                                 \
+    if(ECT_LOG_LEVEL__ >= 2) ECT_LOG__(fmt, ##x);                                 \
 }while(0)
 
 #define ECT_ILOG__(fmt, x...)                                                  \
 do{                                                                             \
-    if(ECT_LOG_LEVEL__ >= 3) ECT_LOG__(fmt, x);                                 \
+    if(ECT_LOG_LEVEL__ >= 3) ECT_LOG__(fmt, ##x);                                 \
 }while(0)
 
 #define ECT_DLOG__(fmt, x...)                                                  \
 do{                                                                             \
-    if(ECT_LOG_LEVEL__ >= 4) ECT_LOG__(fmt, x);                                 \
+    if(ECT_LOG_LEVEL__ >= 4) ECT_LOG__(fmt, ##x);                                 \
 }while(0)
 
 #endif /*ECTEST_UTILS__*/
