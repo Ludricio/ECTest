@@ -9,6 +9,7 @@
 #include <ectest_expimp.h>
 #include <ectest_suit.h>
 #include <ectest_utils.h>
+#include <ectest_alloc.h>
 
 #endif /* ECTEST_MASTER__ */
 
