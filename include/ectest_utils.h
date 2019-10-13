@@ -14,7 +14,46 @@
         ect_fe_keep_ && ect_fe_count_ != ect_fe_size_;                          \
         ect_fe_keep_ = !ect_fe_keep_, ect_fe_count_++)                          \
       for(item = array[ect_fe_count_]; ect_fe_keep_; ect_fe_keep_ = !ect_fe_keep_)
-    
+
+
+/*  ECT_LOG_LEVEL__
+ *  0 = none
+ *  1 = error
+ *  2 = warning
+ *  3 = info
+ *  4 = debug
+ */
+ 
+#ifndef ECT_LOG_LEVEL__
+    #define ECT_LOG_LEVEL__ 3
+#endif
+
+#define ECT_LOG__(fmt,  ...)                                                    \
+    printf("L:%d\t%s::%s\t" fmt "\n" ,                                          \
+        __LINE__,                                                               \
+        __FILE__,                                                               \
+        __func__,                                                               \
+        ##__VA_ARGS__)
+        
+#define ECT_ELOG__(fmt, x...)                                                  \
+do{                                                                             \
+    if(ECT_LOG_LEVEL__ >= 1) ECT_LOG__(fmt, x);                                 \
+}while(0)
+
+#define ECT_WLOG__(fmt, x...)                                                  \
+do{                                                                             \
+    if(ECT_LOG_LEVEL__ >= 2) ECT_LOG__(fmt, x);                                 \
+}while(0)
+
+#define ECT_ILOG__(fmt, x...)                                                  \
+do{                                                                             \
+    if(ECT_LOG_LEVEL__ >= 3) ECT_LOG__(fmt, x);                                 \
+}while(0)
+
+#define ECT_DLOG__(fmt, x...)                                                  \
+do{                                                                             \
+    if(ECT_LOG_LEVEL__ >= 4) ECT_LOG__(fmt, x);                                 \
+}while(0)
 
 #endif /*ECTEST_UTILS__*/
 
