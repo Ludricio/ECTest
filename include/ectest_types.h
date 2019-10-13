@@ -39,9 +39,7 @@ typedef struct ect_suit{
 }ect_suit;
     
 struct ect_memnode__{
-    void *mem;
-    struct ect_memnode__ *left;
-    struct ect_memnode__ *right;
+    struct ect_memnode__ *next, *prev;
 };
 
 #endif /*ECTEST_TYPES__*/
