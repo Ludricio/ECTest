@@ -38,6 +38,11 @@ typedef struct ect_suit{
     const char *name;
 }ect_suit;
     
+struct ect_memnode__{
+    void *mem;
+    struct ect_memnode__ *left;
+    struct ect_memnode__ *right;
+};
 
 #endif /*ECTEST_TYPES__*/
 
