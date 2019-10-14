@@ -22,11 +22,11 @@
 #define ECT_IMPORT_MODULE(module)                                               \
         ECT_IMPORT_MODULE__(module)
         
-#define ECT_SUIT_NEW(suitname, modules...)                                      \
-        ECT_SUIT_NEW__(suitname, modules)
+#define ECT_SUITE_NEW(suitname, modules...)                                      \
+        ECT_SUITE_NEW__(suitname, modules)
 
-#define ECT_SUIT_FREE(suit)                                                     \
-        ECT_SUIT_FREE__(suit)         
+#define ECT_SUITE_FREE(suit)                                                     \
+        ect_suite_free(suit)         
         
         
 #define ECT_SIZEOF_ARRAY(array)                                                 \

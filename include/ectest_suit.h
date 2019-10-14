@@ -1,29 +1,29 @@
-#ifndef ECTEST_SUIT__
-#define ECTEST_SUIT__
+#ifndef ECTEST_SUITE__
+#define ECTEST_SUITE__
 
-#define ECT_SUIT_NEW__(suitname, X...)                                          \
+#define ECT_SUITE_NEW__(suitename, X...)                                        \
     ({                                                                          \
         ect_module *modules[] = {X};                                            \
         size_t modulecount = ECT_SIZEOF_ARRAY(modules);                         \
-        ect_suit *suit = ect_malloc__(sizeof *suit +                            \
+        ect_suite *suite = ect_malloc__(sizeof *suite +                         \
                                         modulecount * sizeof *modules);         \
-        memcpy(suit, &(ect_suit){                                               \
-            .name = suitname,                                                   \
+        memcpy(suite, &(ect_suite){                                             \
+            .name = suitename,                                                  \
             .modulecount = modulecount,                                         \
             .modules = modules                                                  \
-        }, sizeof *suit + modulecount * sizeof *modules);                       \
-        suit;                                                                   \
+        }, sizeof *suite + modulecount * sizeof *modules);                      \
+        suite;                                                                  \
     })
 
-static inline void ect_suit_free(ect_suit *suit)
+static inline void ect_suite_free(ect_suite *suite)
 {
-    if(suit){
-        for(int i = 0; i < suit->modulecount; i++){
-            ect_free__(suit->modules[i]);
+    if(suite){
+        for(int i = 0; i < suite->modulecount; i++){
+            ect_free__(suite->modules[i]);
         }
-        ect_free__(suit);
+        ect_free__(suite);
     }
 }
 
-#endif /*ECTEST_SUIT__*/
+#endif /*ECTEST_SUITE__*/
 

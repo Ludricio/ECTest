@@ -32,11 +32,11 @@ typedef struct ect_module{
     struct ect_test__ tests[];
 }ect_module;
 
-typedef struct ect_suit{
+typedef struct ect_suite{
     int modulecount;
     ect_module **modules;
     const char *name;
-}ect_suit;
+}ect_suite;
     
 struct ect_memnode__{
     struct ect_memnode__ *next, *prev;
