@@ -3,7 +3,7 @@
 
 static struct ect_memnode__ ECT_MEMROOT__ = {.next = &ECT_MEMROOT__, .prev = &ECT_MEMROOT__};
 
-static inline void *ect_alloc__(size_t size)
+static inline void *ect_malloc__(size_t size)
 {
     ECT_DLOG__("Allocating:%zuB", size);
     void *ptr = malloc(size + sizeof(struct ect_memnode__));
