@@ -28,7 +28,7 @@ typedef struct ect_module{
     ect_testfn__ testsetup;
     ect_testfn__ testteardown;
     const char *file;
-    const char *module;
+    const char *name;
     struct ect_test__ tests[];
 }ect_module;
 
