@@ -1,6 +1,30 @@
-#define ECT_LOG_LEVEL__ 0
+#define ECT_LOG_LEVEL__ 5
 #include <ectest_master.h>
 void fail();
+
+void ect_suite_run(ect_suite *suite)
+{
+    ECT_DLOG__("Running suite: %s", suite->name);
+    struct ect_state__ tstate = {0};
+    
+    for(int i = 0; i < suite->modulecount; i++){
+        ect_module *module = suite->modules[i];
+        ECT_DLOG__("Running module: %s.%s", suite->name, module->name);
+        if(module->modsetup) module->modsetup();
+        
+        for(int j = 0; j < module->testcount; j++){
+            struct ect_test__ test = module->tests[j];
+            ECT_DLOG__("Running test: %s.%s.%s", suite->name, module->name, test.name);
+            if(module->testsetup) module->testsetup();
+            tstate.state = 0; //ECT_STATE_SUCCESS__
+            test.func();
+            if(tstate.state == 0)
+            if(module->testteardown) module->testteardown();
+        }
+        
+        if(module->modteardown) module->modteardown();
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -17,14 +41,12 @@ int main(int argc, char **argv)
 /*    struct sigaction sAction;                                              
     sAction.sa_sigaction = &exceptions_signalHandler;        
     sigemptyset(&sAction.sa_mask);                                         
-    sAction.sa_flags = SA_SIGINFO;
+    sAction.sa_flags = SA_SIGINFO;  
     sigaction(SIGSEGV,&sAction,NULL);*/
-    int *ptr = ect_malloc__(sizeof *ptr);
-    ECT_DLOG__();
-    ect_free__(ptr);
-    ect_memroot_free__();
     
-    
+    ect_suite *suite = ECT_SUITE_NEW("test suite", ECT_IMPORT_MODULE(test_module));
+    ect_suite_run(suite);
+    ECT_SUITE_FREE(suite);
     
     extern void tg_testgrab();
     return 0;
