@@ -10,7 +10,7 @@
                                                                                 \
         memcpy(mod, &(ect_module){                                              \
             .file = __FILE__,                                                   \
-            .module = #module,                                                  \
+            .name = #module,                                                    \
             .testcount = testcount,                                             \
             .modsetup = NULL,                                                   \
             .modteardown = NULL,                                                \
