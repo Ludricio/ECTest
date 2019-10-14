@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     sigemptyset(&sAction.sa_mask);                                         
     sAction.sa_flags = SA_SIGINFO;
     sigaction(SIGSEGV,&sAction,NULL);*/
-    int *ptr = ect_alloc__(sizeof *ptr);
+    int *ptr = ect_malloc__(sizeof *ptr);
     ECT_DLOG__();
     ect_free__(ptr);
     ect_memroot_free__();
