@@ -6,7 +6,7 @@
     {                                                                           \
         struct ect_test__ tests[] = {X};                                        \
         size_t testcount = ECT_SIZEOF_ARRAY(tests);                             \
-        ect_module *mod = malloc(sizeof *mod + testcount* sizeof *tests);       \
+        ect_module *mod = ect_malloc__(sizeof *mod + testcount* sizeof *tests); \
                                                                                 \
         memcpy(mod, &(ect_module){                                              \
             .file = __FILE__,                                                   \

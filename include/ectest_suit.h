@@ -5,7 +5,8 @@
     ({                                                                          \
         ect_module *modules[] = {X};                                            \
         size_t modulecount = ECT_SIZEOF_ARRAY(modules);                         \
-        ect_suit *suit = malloc(sizeof *suit + modulecount * sizeof *modules);  \
+        ect_suit *suit = ect_malloc__(sizeof *suit +                            \
+                                        modulecount * sizeof *modules);         \
         memcpy(suit, &(ect_suit){                                               \
             .name = suitname,                                                   \
             .modulecount = modulecount,                                         \
@@ -18,9 +19,9 @@ static inline void ect_suit_free(ect_suit *suit)
 {
     if(suit){
         for(int i = 0; i < suit->modulecount; i++){
-            free(suit->modules[i]);
+            ect_free__(suit->modules[i]);
         }
-        free(suit);
+        ect_free__(suit);
     }
 }
 
