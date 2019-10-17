@@ -31,11 +31,11 @@ void tg_testteardown()
     printf("testteardown\n");
 }
 
-ECT_EXPORT_MODULE(test_module,
-    ECT_TEST(tg_test1),
-    ECT_TEST(tg_test2),
-    ECT_TEST_MODSETUP(tg_modsetup),
-    ECT_TEST_MODTEARDOWN(tg_modteardown),
-    ECT_TEST_SETUP(tg_testsetup),
-    ECT_TEST_TEARDOWN(tg_testteardown)
+ect_export_module(test_module,
+    ect_test(tg_test1),
+    ect_test(tg_test2),
+    ect_module_setup(tg_modsetup),
+    ect_module_teardown(tg_modteardown),
+    ect_test_setup(tg_testsetup),
+    ect_test_teardown(tg_testteardown)
 );
