@@ -44,7 +44,6 @@ struct ect_memnode__{
 };
 
 enum ect_memtag__{
-    ECT_MEMTAG_ROOT__,
     ECT_MEMTAG_SUITE__,
     ECT_MEMTAG_MODULE__,
     ECT_MEMTAG_TEST__
