@@ -23,7 +23,7 @@
         memcpy(mod->tests, tests, testcount * sizeof *tests);                   \
                                                                                 \
         ECT_ARRAY_FOREACH(struct ect_test__ test, mod->tests, testcount){       \
-            if(test.type = ECT_TESTTYPE_TEST__) continue;                       \
+            if(test.type == ECT_TESTTYPE_TEST__) continue;                      \
                                                                                 \
             if(!mod->modsetup && test.type == ECT_TESTTYPE_MODSETUP__){         \
                 mod->modsetup = test.func;                                      \
