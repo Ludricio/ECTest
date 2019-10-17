@@ -1,6 +1,8 @@
 #ifndef ECTEST_EXPIMP__
 #define ECTEST_EXPIMP__    
     
+#define ect_export_module(module, functions...)                                 \
+        ECT_EXPORT_MODULE__(module, functions)
 #define ECT_EXPORT_MODULE__(module, X...)                                       \
     ect_module *ect_export_module_##module##__()                                \
     {                                                                           \
@@ -42,13 +44,23 @@
                                                                                 \
         return mod;                                                             \
     }
-    
-#define ECT_TEST__(test) {test, 0, #test}
-#define ECT_TEST_MODSETUP__(test) {test, 1, #test}
-#define ECT_TEST_MODTEARDOWN__(test) {test, 2, #test}
-#define ECT_TEST_SETUP__(test) {test, 3, #test}
-#define ECT_TEST_TEARDOWN__(test) {test, 4, #test}
+      
+#define ect_test(function) ECT_TEST__(function)
+#define ECT_TEST__(function) {function, 0, #function}
 
+#define ect_module_setup(function) ECT_MODULE_SETUP__(function)
+#define ECT_MODULE_SETUP__(function) {function, 1, #function}
+
+#define ect_module_teardown(function) ECT_MODULE_TEARDOWN__(function)
+#define ECT_MODULE_TEARDOWN__(function) {function, 2, #function}
+
+#define ect_test_setup(function) ECT_TEST_SETUP__(function)
+#define ECT_TEST_SETUP__(function) {function, 3, #function}
+
+#define ect_test_teardown(function) ECT_TEST_TEARDOWN__(function)
+#define ECT_TEST_TEARDOWN__(function) {function, 4, #function}
+
+#define ect_import_module(module) ECT_IMPORT_MODULE__(module)
 #define ECT_IMPORT_MODULE__(module)                                             \
     ({                                                                          \
         extern ect_module *ect_export_module_##module##__();                    \
