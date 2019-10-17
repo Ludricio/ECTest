@@ -1,0 +1,6 @@
+{
+    "workbench.tree.renderIndentGuides": "always",
+
+    "editor.rulers": [80, 120],
+
+}
