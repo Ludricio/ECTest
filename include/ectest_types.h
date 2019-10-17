@@ -39,7 +39,15 @@ typedef struct ect_suite{
 }ect_suite;
     
 struct ect_memnode__{
-    struct ect_memnode__ *next, *prev;
+    struct ect_memnode__ *next; 
+    struct ect_memnode__ *prev;
+};
+
+enum ect_memtag__{
+    ECT_MEMTAG_ROOT__,
+    ECT_MEMTAG_SUITE__,
+    ECT_MEMTAG_MODULE__,
+    ECT_MEMTAG_TEST__
 };
 
 #endif /*ECTEST_TYPES__*/
