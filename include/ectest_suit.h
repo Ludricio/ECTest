@@ -7,7 +7,8 @@
         ect_module *modules[] = {X};                                            \
         size_t modulecount = ECT_SIZEOF_ARRAY(modules);                         \
         ect_suite *suite = ect_malloc__(sizeof *suite +                         \
-                                        modulecount * sizeof *modules);         \
+                                        modulecount * sizeof *modules,          \
+                                        ECT_MEMTAG_SUITE__);                    \
         memcpy(suite, &(ect_suite){                                             \
             .name = suitename,                                                  \
             .modulecount = modulecount,                                         \
