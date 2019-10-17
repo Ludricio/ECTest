@@ -1,6 +1,7 @@
 #ifndef ECTEST_SUITE__
 #define ECTEST_SUITE__
 
+#define ect_suite_new(suitename, modules...) ECT_SUITE_NEW__(suitename, modules)
 #define ECT_SUITE_NEW__(suitename, X...)                                        \
     ({                                                                          \
         ect_module *modules[] = {X};                                            \
