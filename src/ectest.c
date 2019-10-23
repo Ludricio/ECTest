@@ -45,15 +45,18 @@ int main(int argc, char **argv)
     sigemptyset(&sAction.sa_mask);
     sAction.sa_flags = SA_SIGINFO;
     sigaction(SIGSEGV,&sAction,NULL);*/
+    
+    ect_mem_init__();
+    void *ptr = ect_malloc__(25, ECT_MEMTAG_MODULE__);
+    ect_free__(ptr);
+    ect_mem_release__();
 
-
-
-    printf("SIZE OF: %zu\n", sizeof(struct ect_memnode__));
+    /*printf("SIZE OF: %zu\n", sizeof(struct ect_memnode__));
     ect_suite *suite = ect_suite_new("test suite", ect_import_module(test_module));
     ect_suite_run(suite);
-    ect_suite_free(suite);
+    ect_suite_free(suite);*/
 
-    extern void tg_testgrab();
+    //extern void tg_testgrab();
     return 0;
 }
 
