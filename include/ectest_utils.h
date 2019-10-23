@@ -48,13 +48,13 @@
 #define ECT_ELOG__(fmt, x...)
 #endif /*ECT_LOG_LEVEL__ >= 1*/
 
-#if ECT_LOG_LEVEL__ >= 4
+#if ECT_LOG_LEVEL__ >= 2
 #define ECT_WLOG__(fmt, x...) ECT_LOG__("WARNING", fmt, ##x)
 #else
 #define ECT_WLOG__(fmt, x...)
 #endif /*ECT_LOG_LEVEL__ >= 2*/
 
-#if ECT_LOG_LEVEL__ >= 4
+#if ECT_LOG_LEVEL__ >= 3
 #define ECT_ILOG__(fmt, x...) ECT_LOG__("INFO", fmt, ##x)
 #else
 #define ECT_ILOG__(fmt, x...)
