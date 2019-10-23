@@ -2,6 +2,13 @@
 #include <ectest_master.h>
 void fail();
 
+//TODO ect_suite_run
+//  Add test breakdown
+//  Add result printout
+//  Add appenders
+//  Add jumpback from failed test
+//  Add test isolation ???
+
 void ect_suite_run(ect_suite *suite)
 {
     ECT_DLOG__("Running suite: %s", suite->name);
@@ -17,9 +24,17 @@ void ect_suite_run(ect_suite *suite)
             struct ect_test__ test = module->tests[j];
             ECT_DLOG__("Running test: %s.%s.%s", suite->name, module->name, test.name);
             if(module->testsetup) module->testsetup();
-            tstate.state = 0; //ECT_STATE_SUCCESS__
+            tstate.state = ECT_STATE_SUCCESS__;
             test.func();
-            if(tstate.state == 0)
+            switch (tstate.state){
+                //TODO add state handling
+                case /* constant-expression */:
+                    /* code */
+                    break;
+                default:
+                    //TODO add error handling
+                    break;
+            }
             if(module->testteardown) module->testteardown();
 
         }
