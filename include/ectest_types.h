@@ -1,8 +1,14 @@
 #ifndef ECTEST_TYPES__
 #define ECTEST_TYPES__
 
+enum ect_stateval__{
+    ECT_STATE_SUCCESS__,
+    ECT_STATE_FAILED__,
+    ECT_STATE_SKIPPED__
+};
+
 struct ect_state__{
-    int state;
+    enum ect_stateval__ state;
     int line;
     char func[128];
     char msg[1024];
