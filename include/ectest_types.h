@@ -49,5 +49,13 @@ enum ect_memtag__{
     ECT_MEMTAG_TEST__
 };
 
+#if ECT_LOG_LEVEL__ >= 4
+static const char *ECT_MEMTAG_STR__[] = {
+    "ECT_MEMTAG_SUITE__",
+    "ECT_MEMTAG_MODULE__",
+    "ECT_MEMTAG_TEST__"
+};
+#endif /*ECT_LOG_LEVEL__ >= 4*/
+
 #endif /*ECTEST_TYPES__*/
 
