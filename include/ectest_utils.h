@@ -26,37 +26,47 @@
  *  3 = info
  *  4 = debug
  */
- 
+
+
 #ifndef ECT_LOG_LEVEL__
     #define ECT_LOG_LEVEL__ 3
 #endif
 
-#define ECT_LOG__(fmt,  ...)                                                    \
-    printf("L:%d\t%s::%s\t" fmt "\n" ,                                          \
+#ifndef ECT_EXT_LOG_IMPL__
+
+#define ECT_LOG__(dlvl, fmt,  ...)                                              \
+    printf("[%s]\tL:%d\t%s::%s\t" fmt "\n" ,                                    \
+        dlvl,                                                                   \
         __LINE__,                                                               \
         __FILE__,                                                               \
         __func__,                                                               \
         ##__VA_ARGS__)
         
-#define ECT_ELOG__(fmt, x...)                                                  \
-do{                                                                             \
-    if(ECT_LOG_LEVEL__ >= 1) ECT_LOG__(fmt, ##x);                                 \
-}while(0)
+#if ECT_LOG_LEVEL__ >= 1
+#define ECT_ELOG__(fmt, x...) ECT_LOG__("ERROR", fmt, ##x)
+#else
+#define ECT_ELOG__(fmt, x...)
+#endif /*ECT_LOG_LEVEL__ >= 1*/
 
-#define ECT_WLOG__(fmt, x...)                                                  \
-do{                                                                             \
-    if(ECT_LOG_LEVEL__ >= 2) ECT_LOG__(fmt, ##x);                                 \
-}while(0)
+#if ECT_LOG_LEVEL__ >= 4
+#define ECT_WLOG__(fmt, x...) ECT_LOG__("WARNING", fmt, ##x)
+#else
+#define ECT_WLOG__(fmt, x...)
+#endif /*ECT_LOG_LEVEL__ >= 2*/
 
-#define ECT_ILOG__(fmt, x...)                                                  \
-do{                                                                             \
-    if(ECT_LOG_LEVEL__ >= 3) ECT_LOG__(fmt, ##x);                                 \
-}while(0)
+#if ECT_LOG_LEVEL__ >= 4
+#define ECT_ILOG__(fmt, x...) ECT_LOG__("INFO", fmt, ##x)
+#else
+#define ECT_ILOG__(fmt, x...)
+#endif /*ECT_LOG_LEVEL__ >= 3*/
 
-#define ECT_DLOG__(fmt, x...)                                                  \
-do{                                                                             \
-    if(ECT_LOG_LEVEL__ >= 4) ECT_LOG__(fmt, ##x);                                 \
-}while(0)
+#if ECT_LOG_LEVEL__ >= 4
+#define ECT_DLOG__(fmt, x...) ECT_LOG__("DEBUG", fmt, ##x)
+#else
+#define ECT_DLOG__(fmt, x...)
+#endif /*ECT_LOG_LEVEL__ >= 4*/
+
+#endif /*ECT_EXT_LOG_IMPL__*/
 
 #endif /*ECTEST_UTILS__*/
 
