@@ -1,6 +1,8 @@
 {
     "workbench.tree.renderIndentGuides": "always",
 
-    "editor.rulers": [80, 120],
+    "editor.rulers": [80],
 
+    //"terminal.integrated.fontSize": 15
+    "terminal.integrated.fontFamily": "monospace"
 }
