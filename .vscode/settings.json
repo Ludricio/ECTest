@@ -3,6 +3,49 @@
 
     "editor.rulers": [80],
 
-    //"terminal.integrated.fontSize": 15
-    "terminal.integrated.fontFamily": "monospace"
+    "terminal.integrated.fontFamily": "monospace",
+
+    "todo-tree.general.tags": [
+        "TODO",
+        "FIXME",
+        "BUG",
+        "REVIEW",
+        "TEST"
+    ],
+    "todo-tree.highlights.defaultHighlight": {
+        "icon": "alert",
+        "type": "text",
+        "foreground": "yellow",
+        "background": "cyan",
+        "opacity": 40,
+        "iconColour": "yellow"
+    },
+    "todo-tree.highlights.customHighlight": {
+        "TODO": {
+            "icon": "check",
+            "iconColour": "yellow"
+        },
+        "FIXME": {
+            "foreground": "yellow",
+            "iconColour": "yellow"
+        },
+        "BUG":{
+            "foreground": "red",
+            "iconColour": "red",
+            "icon": "bug",
+            "opacity": 100
+        },
+        "REVIEW":{
+            "icon": "book",
+            "iconColour": "cyan",
+            "foreground": "magenta",
+            "opacity": 20
+        },
+        "TEST":{
+            "icon": "beaker",
+            "iconColour": "magenta",
+            "foreground": "magenta",
+            "opacity": 20
+        }
+    }
 }
