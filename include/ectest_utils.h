@@ -35,10 +35,10 @@
 #ifndef ECT_EXT_LOG_IMPL__
 
 #define ECT_LOG__(dlvl, fmt,  ...)                                              \
-    printf("[%s]\tL:%d\t%s::%s\t" fmt "\n" ,                                    \
+    printf("[%s]\t%s:%d::%s\t" fmt "\n" ,                                       \
         dlvl,                                                                   \
-        __LINE__,                                                               \
         __FILE__,                                                               \
+        __LINE__,                                                               \
         __func__,                                                               \
         ##__VA_ARGS__)
         
