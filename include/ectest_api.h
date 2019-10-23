@@ -29,7 +29,16 @@
  * ect_suite_free(ect_suite *suite)
  * 
  * ECT_SIZEOF_ARRAY(TYPE array[])
+ * 
+ * ECT_ARRAY_FOREACH(TYPE item, TYPE array[], size_t size)
  */  
 
 #endif /*ECTEST_API__*/
+
+
+
+
+
+
+
 
