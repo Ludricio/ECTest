@@ -29,6 +29,12 @@ struct{
         _prev->next = _node;\
     }while(0)
 
+#define __ECTEST_MEMNODE_UNLINK(_node)\
+    do{\
+        _node->next->prev = _node->prev;\
+        _node->prev->next = _node->next;\
+    }while(0)
+
 #define __ECTEST_MEMROOT_BYTAG(root, tag)\
     do{\
         switch(tag){\
