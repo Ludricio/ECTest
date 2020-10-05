@@ -86,7 +86,18 @@ static inline void __ectest_free(void *ptr)
     free(ptr-sizeof *node);
 }
 
-
+static inline void __ectest_mtfree(enum __ectest_memtag tag)
+{
+    struct __ectest_memnode *root, *cur, *tmp;
+    __ECTEST_MEMROOT_BYTAG(root, tag);
+    cur = root->next;
+    while(cur != root){
+        tmp = cur->next;
+        free(cur);
+        cur = tmp;
+    }
+    __ECTEST_MEMNODE_LINK(root, root, root);
+}
 
 #endif /*__ECTEST_MEMORY_H_*/
 
