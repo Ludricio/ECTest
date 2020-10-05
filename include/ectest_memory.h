@@ -21,9 +21,24 @@ struct{
     struct __ectest_memnode *sroot;
 } *__ectest_memroot;
 
-static inline void __ect_mem_init(void)
+#define __ECTEST_MEMNODE_LINK(_prev, _node, _next)\
+    do{\
+        _node->next = _next;\
+        _node->prev = _prev;\
+        _next->prev = _node;\
+        _prev->next = _node;\
+    }while(0)
+
+static inline void __ectest_mem_init(void)
 {
     __ectest_memroot  = malloc(sizeof *__ectest_memroot);
+    __ectest_memroot->troot = malloc(sizeof *__ectest_memroot->troot);
+    __ectest_memroot->mroot = malloc(sizeof *__ectest_memroot->mroot);    
+    __ectest_memroot->sroot = malloc(sizeof *__ectest_memroot->sroot);
+    
+    __ECTEST_MEMNODE_LINK(__ectest_memroot->troot, __ectest_memroot->troot, __ectest_memroot->troot);
+    __ECTEST_MEMNODE_LINK(__ectest_memroot->mroot, __ectest_memroot->mroot, __ectest_memroot->mroot);
+    __ECTEST_MEMNODE_LINK(__ectest_memroot->sroot, __ectest_memroot->sroot, __ectest_memroot->sroot);
 }
 
 #endif /*__ECTEST_MEMORY_H_*/
