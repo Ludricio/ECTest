@@ -78,6 +78,14 @@ static inline void *__ectest_malloc(size_t size, enum __ectest_memtag tag)
     return ptr + sizeof *node;
 }
 
+static inline void __ectest_free(void *ptr)
+{
+    if(!ptr) return;
+    struct __ectest_memnode *node = ptr - sizeof *node;
+    __ECTEST_MEMNODE_UNLINK(node);
+    free(ptr-sizeof *node);
+}
+
 
 
 #endif /*__ECTEST_MEMORY_H_*/
