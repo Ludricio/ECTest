@@ -1,1 +1,1 @@
-let &path.="./include,/usr/include/AL"
+let &path.="./include,/usr/include/"
