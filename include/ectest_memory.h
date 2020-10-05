@@ -99,5 +99,12 @@ static inline void __ectest_mtfree(enum __ectest_memtag tag)
     __ECTEST_MEMNODE_LINK(root, root, root);
 }
 
+static inline void __ectest_mrfree(void)
+{
+    __ectest_mtfree(__ECTEST_MEMTAG_TEST);
+    __ectest_mtfree(__ECTEST_MEMTAG_MOD);
+    __ectest_mtfree(__ECTEST_MEMTAG_SUITE);
+}
+
 #endif /*__ECTEST_MEMORY_H_*/
 
