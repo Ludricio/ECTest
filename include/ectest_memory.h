@@ -106,5 +106,14 @@ static inline void __ectest_mrfree(void)
     __ectest_mtfree(__ECTEST_MEMTAG_SUITE);
 }
 
+static inline void __ectest_memrelease(void)
+{
+    __ectest_mrfree();
+    free(__ectest_memroot->troot);
+    free(__ectest_memroot->mroot);
+    free(__ectest_memroot->sroot);
+    free(__ectest_memroot);
+}
+
 #endif /*__ECTEST_MEMORY_H_*/
 
