@@ -29,7 +29,25 @@ struct{
         _prev->next = _node;\
     }while(0)
 
-static inline void __ectest_mem_init(void)
+#define __ECTEST_MEMROOT_BYTAG(root, tag)\
+    do{\
+        switch(tag){\
+            case __ECTEST_MEMTAG_TEST:\
+                root = __ectest_memroot->troot;\
+                break;\
+            case __ECTEST_MEMTAG_MOD:\
+                root = __ectest_memroot->mroot;\
+                break;\
+            case __ECTEST_MEMTAG_SUITE:\
+                root = __ectest_memroot->sroot;\
+                break;\
+            default:\
+                /*TODO LOG*/\
+                abort();\
+        }\
+    }while(0)
+
+static inline void __ectest_meminit(void)
 {
     __ectest_memroot  = malloc(sizeof *__ectest_memroot);
     __ectest_memroot->troot = malloc(sizeof *__ectest_memroot->troot);
