@@ -1,8 +1,6 @@
 
-
 #ifndef __ECTEST_MASTER_H_
 #define __ECTEST_MASTER_H_
-
 
 #ifndef __ECTEST_TYPES_H_
 #define __ECTEST_TYPES_H_
@@ -24,9 +22,17 @@ struct __ectest_suite{
     int nmodules;
     struct __ectest_module modules[];
 };
+
 #endif /*__ECTEST_TYPES_H_*/
 
+
+#ifndef __ECTEST_EXP_H_
+#define __ECTEST_EXP_H_
+
+
+#endif /*__ECTEST_EXP_H_*/
 
 
 
 #endif /*__ECTEST_MASTER_H_*/
+
