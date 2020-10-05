@@ -59,5 +59,20 @@ static inline void __ectest_meminit(void)
     __ECTEST_MEMNODE_LINK(__ectest_memroot->sroot, __ectest_memroot->sroot, __ectest_memroot->sroot);
 }
 
+static inline void *__ectest_malloc(size_t size, enum __ectest_memtag tag)
+{
+    struct __ectest_memnode *root, *node;
+
+    void *ptr =  malloc(size + sizeof *node);
+    node = ptr;
+
+    __ECTEST_MEMROOT_BYTAG(root, tag);
+    __ECTEST_MEMNODE_LINK(root, node, root->next);
+
+    return ptr + sizeof *node;
+}
+
+
+
 #endif /*__ECTEST_MEMORY_H_*/
 
